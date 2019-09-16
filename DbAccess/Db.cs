@@ -4,11 +4,53 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
+using System.Text.RegularExpressions;
 
 namespace DbAccess
 {
     public class Db
     {
+        //public bool validateInput(string input, Dictionary<string, string> metadata)
+        //{
+        //    if(metadata["isRequired"].Equals("Y") && input.Length > 0)
+        //    {
+        //        string pattern;
+        //        switch (metadata["dataType"])
+        //        {
+        //            case "int":
+        //                pattern = "^\\d+$";
+        //                break;
+        //            case "float":
+        //                pattern = "[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)";
+        //                break;
+        //            case "email":
+        //                pattern = ".+";
+        //                break;
+        //            case "phoneNumber":
+        //                pattern = "^\\d{3}-\\d{4}$";
+        //                break;
+        //            case "date":
+        //                pattern = "((0?[13578]|10|12)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[01]?))(-|\\/)((\\d{4})|(\\d{2}))|(0?[2469]|11)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[0]?))(-|\\/)((\\d{4}|\\d{2})))";
+        //                break;
+        //            case "time":
+        //                pattern = ".+";
+        //                break;
+        //            case "string":
+        //                pattern = ".+";
+        //                break;
+        //            default:
+        //                return false;
+        //        }
+        //        var match = Regex.Match(input, pattern);
+        //        if (match.Success)
+        //        {
+        //            return true;
+        //        }
+        //        return false;
+        //    }
+        //    return false;
+        //}
+
         public string mapDbTypeToInputType(string dataType, string colName)
         {
             string stringType = "string";
@@ -65,6 +107,7 @@ namespace DbAccess
 
             return null;
         }
+
         public string getSqlSelect(List<string> cols, string tableName)
         {
             string sql = "SELECT ";
@@ -102,6 +145,23 @@ namespace DbAccess
                     sql += $"'{value}') ";
                 count += 1;
             });
+            return sql;
+        }
+
+        public string getSqlUpdate(List<string> cols, List<string> newValues,string pkName ,string pkValue, string tableName)
+        {
+            string sql = $"UPDATE [dbo].[{tableName}] SET ";
+            int count = 1;
+            cols.ForEach((string colName) =>
+            {
+                if (count < cols.Count)
+                    sql += $"[{colName}]= '{newValues.ElementAt(count - 1)}', ";
+                else if (count == cols.Count)
+                    sql += $"[{colName}]= '{newValues.ElementAt(count - 1)}' ";
+                count += 1;
+            });
+            sql += $"WHERE [{pkName}]={pkValue}";
+            
             return sql;
         }
 
@@ -199,17 +259,13 @@ namespace DbAccess
                 int count = 0;
                 while (dataReader.Read())
                 {
-                    if(count > 0)
-                    {
+                    Dictionary<string, string> props = new Dictionary<string, string>();
+                    props.Add("dataType", dataReader["DATA_TYPE"].ToString());
 
-                        Dictionary<string, string> props = new Dictionary<string, string>();
-                        props.Add("dataType", dataReader["DATA_TYPE"].ToString());
+                    string isRequired = dataReader["IS_NULLABLE"].ToString().Equals("YES") ? "N" : "Y";
+                    props.Add("isRequired", isRequired);
 
-                        string isRequired = dataReader["IS_NULLABLE"].ToString().Equals("YES") ? "N" : "Y";
-                        props.Add("isRequired", isRequired);
-
-                        data.Add(dataReader["COLUMN_NAME"].ToString(), props );
-                    }
+                    data.Add(dataReader["COLUMN_NAME"].ToString(), props );
                     count += 1;
                 }
 
@@ -228,11 +284,18 @@ namespace DbAccess
             }
         }
 
-        public List<string> getColumnNames(string table=null, SqlConnection cnn = null, Dictionary<string, Dictionary<string, string>> data=null)
+        public List<string> getAllColumnNames(string table = null, SqlConnection cnn = null, Dictionary<string, Dictionary<string, string>> data = null)
+        {
+            if (data == null)
+                data = this.getTableMetadata(table, cnn);
+            return new List<string>(data.Keys);
+        }
+
+        public List<string> getColumnNamesWithoutPk(string table=null, SqlConnection cnn = null, Dictionary<string, Dictionary<string, string>> data=null)
         {
             if(data == null)
                 data = this.getTableMetadata(table, cnn);
-            return new List<string>(data.Keys);
+            return new List<string>(data.Keys.Skip(1));
         }
 
         public SqlConnection getConnection()

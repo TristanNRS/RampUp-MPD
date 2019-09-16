@@ -79,7 +79,7 @@ namespace Test2
 
                 conn.Open();
 
-                List<string> colNames = db.getColumnNames(this.selectedTable, conn);
+                List<string> colNames = db.getColumnNamesWithoutPk(this.selectedTable, conn);
 
                 string sql = db.getSqlSelect(colNames, this.selectedTable);
 
@@ -118,29 +118,6 @@ namespace Test2
 
         }
 
-        protected void GridView1_RowEditing(object sender, GridViewEditEventArgs e)
-        {
-            GridView1.EditIndex = e.NewEditIndex;
-            this.bindTable();
-        }
-
-        protected void GridView1_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
-        {
-            GridView1.EditIndex = -1;
-            this.bindTable();
-        }
-
-        protected void GridView1_RowUpdating(object sender, GridViewUpdateEventArgs e)
-        {
-
-        }
-
-
-        protected void GridView1_RowDeleting(object sender, GridViewDeleteEventArgs e)
-        {
-            Response.Write("deleted<br/>");
-        }
-
         protected void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             GridView1.PageIndex = e.NewPageIndex;
@@ -162,7 +139,7 @@ namespace Test2
 
             // add body
             Dictionary<string, Dictionary<string, string>> data = db.getTableMetadata(this.selectedTable);
-            List<string> colNames = db.getColumnNames(null, null, data);
+            List<string> colNames = db.getColumnNamesWithoutPk(null, null, data);
             colNames.ForEach((colName) =>
             {
                 TableRow tr = new TableRow();
@@ -231,7 +208,7 @@ namespace Test2
                         typeValidator.ValidationExpression = "[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)";
                         break;
                     case "email":
-                        typeValidator.ValidationExpression = "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$";
+                        typeValidator.ValidationExpression = ".+";
                         break;
                     case "phoneNumber":
                         typeValidator.ValidationExpression = "^\\d{3}-\\d{4}$";
@@ -278,7 +255,7 @@ namespace Test2
                 SqlConnection conn = db.getConnection();
                 conn.Open();
                 List<string> values = this.getInsertValues(formTable);
-                List<string> cols = db.getColumnNames(this.selectedTable, conn);
+                List<string> cols = db.getColumnNamesWithoutPk(this.selectedTable, conn);
                 string sql = db.getSqlInsert(cols, values, this.selectedTable);
                 SqlCommand command = db.getCommand(sql, conn);
                 command.ExecuteNonQuery();

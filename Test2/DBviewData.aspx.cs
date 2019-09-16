@@ -67,7 +67,7 @@ namespace Test2
 
                 if (dt.Rows.Count > 0)
                 {
-                    List<string> colNames = db.getColumnNames(tableName, conn);
+                    List<string> colNames = db.getColumnNamesWithoutPk(tableName, conn);
                     BoundField Field;
                     DataControlField Col;
                     colNames.ForEach((colName) =>
@@ -96,7 +96,6 @@ namespace Test2
         public void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             GridView1.PageIndex = e.NewPageIndex;
-            GridView1.Columns.Clear();
             bindTable(tableList.SelectedItem.Value.ToString());
         }
 
