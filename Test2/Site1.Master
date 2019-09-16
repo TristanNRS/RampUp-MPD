@@ -1,0 +1,70 @@
+﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site1.master.cs" Inherits="Test2.Site1" %>
+
+<%@ Register assembly="AjaxControlToolkit" namespace="AjaxControlToolkit" tagprefix="ajaxToolkit" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Ministry of Planning Demo Project</title>
+    <link href="Styles.css" rel="stylesheet" type="text/css"/>
+    <asp:ContentPlaceHolder ID="head" runat="server">
+    </asp:ContentPlaceHolder>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div>
+            <div style="margin-top:25px; margin-bottom:15px; position:relative">
+                <h1 style="display:inline">Ministry of Planning</h1>
+                <table style="width:200px;position:absolute; top:0px; right: 140px; display:inline">
+                    <tr>
+                        <td>
+                            <asp:TextBox ID="authResult" runat="server" Height="16px" Width="110px" BorderStyle="None" style="display:inline; margin-right:10px;"></asp:TextBox> 
+                        </td>
+                        <td>
+                            <asp:Button ID="logout" runat="server" Text="Log out" style="width:65px; display:none;" OnClick="logout_Click"/>
+                        </td>
+                    </tr>
+                </table>
+                
+            </div>
+            <div style="margin-bottom:25px;">
+                <asp:Menu ID="Menu1" runat="server" Height="35px" Width="40%" Orientation="Horizontal">
+                    <staticmenuitemstyle 
+                      VerticalPadding="5px"
+                      HorizontalPadding="25px"
+                      forecolor="Black"
+                      borderstyle="Solid"
+                      borderwidth="1"
+                      bordercolor="Black" 
+                        backcolor="LightBlue"/>
+
+                    <dynamicmenuitemstyle 
+                      VerticalPadding="5px"
+                      HorizontalPadding="25px"
+                      backcolor="LightBlue"
+                      borderstyle="Solid"
+                      borderwidth="1"
+                      bordercolor="Black" 
+                      forecolor="Black"
+                        />
+                    <Items>
+                        <asp:MenuItem NavigateUrl="Default.aspx" Text="Home" Value="Home"></asp:MenuItem>
+                        <asp:MenuItem Text="About Us" NavigateUrl="AboutUs.aspx" Value="About Us"></asp:MenuItem>
+                        <asp:MenuItem Text="Database Exercises" Value="Database Exercises">
+                            <asp:MenuItem NavigateUrl="DBviewData.aspx" Text="View Data" Value="View Data"></asp:MenuItem>
+                            <asp:MenuItem Text="Insert" Value="Insert" NavigateUrl="DBinsert.aspx"></asp:MenuItem>
+                            <asp:MenuItem Text="Update" Value="Update" NavigateUrl="DBupdate.aspx"></asp:MenuItem>
+                            <asp:MenuItem Text="Delete" Value="Delete" NavigateUrl="DBdelete.aspx"></asp:MenuItem>
+                            <asp:MenuItem Text="Search" Value="Search" NavigateUrl="DBsearch.aspx"></asp:MenuItem>
+                        </asp:MenuItem>
+                    </Items>
+                </asp:Menu>
+            </div>
+            <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
+        
+            </asp:ContentPlaceHolder>
+        </div>
+    </form>
+</body>
+</html>
