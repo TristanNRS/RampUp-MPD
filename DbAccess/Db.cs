@@ -10,46 +10,51 @@ namespace DbAccess
 {
     public class Db
     {
-        //public bool validateInput(string input, Dictionary<string, string> metadata)
-        //{
-        //    if(metadata["isRequired"].Equals("Y") && input.Length > 0)
-        //    {
-        //        string pattern;
-        //        switch (metadata["dataType"])
-        //        {
-        //            case "int":
-        //                pattern = "^\\d+$";
-        //                break;
-        //            case "float":
-        //                pattern = "[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)";
-        //                break;
-        //            case "email":
-        //                pattern = ".+";
-        //                break;
-        //            case "phoneNumber":
-        //                pattern = "^\\d{3}-\\d{4}$";
-        //                break;
-        //            case "date":
-        //                pattern = "((0?[13578]|10|12)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[01]?))(-|\\/)((\\d{4})|(\\d{2}))|(0?[2469]|11)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[0]?))(-|\\/)((\\d{4}|\\d{2})))";
-        //                break;
-        //            case "time":
-        //                pattern = ".+";
-        //                break;
-        //            case "string":
-        //                pattern = ".+";
-        //                break;
-        //            default:
-        //                return false;
-        //        }
-        //        var match = Regex.Match(input, pattern);
-        //        if (match.Success)
-        //        {
-        //            return true;
-        //        }
-        //        return false;
-        //    }
-        //    return false;
-        //}
+        public string validateInput(string input, string colName, Dictionary<string, string> metadata)
+        {
+            if(input.Length > 0)
+            {
+                string type = this.mapDbTypeToInputType(metadata["dataType"], colName);
+                string pattern;
+                switch (type)
+                {
+                    case "int":
+                        pattern = "^\\d+$";
+                        break;
+                    case "float":
+                        pattern = "[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)";
+                        break;
+                    case "email":
+                        pattern = ".+";
+                        break;
+                    case "phoneNumber":
+                        pattern = "^\\d{3}-\\d{4}$";
+                        break;
+                    case "date":
+                        pattern = "((0?[13578]|10|12)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[01]?))(-|\\/)((\\d{4})|(\\d{2}))|(0?[2469]|11)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[0]?))(-|\\/)((\\d{4}|\\d{2})))";
+                        break;
+                    case "time":
+                        pattern = ".+";
+                        break;
+                    case "string":
+                        pattern = ".+";
+                        break;
+                    default:
+                        return "Error: no type found";
+                }
+                var match = Regex.Match(input, pattern);
+                if (match.Success)
+                {
+                    return "Success";
+                } else 
+                    return $"Expected {type} ";
+            } else
+            {
+                if (metadata["isRequired"].Equals("Y"))
+                    return "Field is required";
+            }
+            return "Success";
+        }
 
         public string mapDbTypeToInputType(string dataType, string colName)
         {
@@ -154,10 +159,12 @@ namespace DbAccess
             int count = 1;
             cols.ForEach((string colName) =>
             {
+                string newValue = newValues.ElementAt(count - 1);
+                //newValue = newValue.Length > 0 ? newValue : null;
                 if (count < cols.Count)
-                    sql += $"[{colName}]= '{newValues.ElementAt(count - 1)}', ";
+                    sql += newValue != string.Empty ? $"[{colName}]= '{newValue}', " : $"[{colName}]= NULL,";
                 else if (count == cols.Count)
-                    sql += $"[{colName}]= '{newValues.ElementAt(count - 1)}' ";
+                    sql += newValue != string.Empty ? $"[{colName}]= '{newValue}' " : $"[{colName}]= NULL ";
                 count += 1;
             });
             sql += $"WHERE [{pkName}]={pkValue}";
@@ -192,37 +199,6 @@ namespace DbAccess
             {
                 Console.Write(err);
                 return null;
-            }
-        }
-
-        public int getNumTables()
-        {
-            try
-            {
-                SqlConnection cnn = this.getConnection();
-                cnn.Open();
-
-                string sql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'";
-                SqlCommand command = this.getCommand(sql, cnn);
-                SqlDataReader dataReader = this.getDataReader(command);
-
-                int tableCount = 0;
-                while (dataReader.Read())
-                {
-                    tableCount += (int)dataReader.GetValue(0);
-                }
-
-                // one less table since Users table is not shown 
-                tableCount -= 1;
-
-                // close off connections
-                this.closeOff(cnn, command, dataReader);
-
-                return tableCount;
-            } catch (Exception err)
-            {
-                Console.Write(err);
-                return -1;
             }
         }
 

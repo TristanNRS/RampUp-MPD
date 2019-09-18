@@ -17,4 +17,6 @@
         AutoGenerateEditButton="True" 
         >
     </asp:GridView>
+
+    <asp:Panel ID="statusPanel" runat="server"></asp:Panel>
 </asp:Content>

@@ -8,8 +8,6 @@ using System.Data;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 
-//TODO: Why is data from last form showing up when switching tables. Occurs when txt box has same name/id
-
 
 namespace Test2
 {
@@ -22,7 +20,8 @@ namespace Test2
         {
             if (!IsPostBack)
             {
-                Panel1.Style.Add("display", "none");
+                formPanel.Style.Add("display", "none");
+                statusPanel.Style.Add("display", "none");
                 addDataButton.Style.Add("display", "none");
                 tableList.Items.Add(new ListItem("----", "----"));
                 this.loadTablesInDropdown();
@@ -51,17 +50,25 @@ namespace Test2
 
         protected void tableList_SelectedIndexChanged(object sender, EventArgs e)
         {
+            formPanel.Style.Add("display", "none");
+            formTable.Controls.Clear();
+
+            statusPanel.Style.Add("display", "none");
+            statusPanel.Controls.Clear();
+
             // get all data from selected table
             if (!tableList.SelectedItem.Value.ToString().Equals("----"))
             {
                 this.selectedTable = tableList.SelectedItem.Value.ToString();
-                Panel1.Style.Add("display", "none");
+
                 addDataButton.Style.Add("display", "inline");
                 GridView1.Style.Add("display", "inline");
+                GridView1.PageIndex = 0;
                 this.bindTable();
             }
             else
             {
+
                 addDataButton.Style.Add("display", "none");
                 GridView1.Style.Add("display", "none");
                 this.selectedTable = string.Empty;
@@ -126,12 +133,29 @@ namespace Test2
 
         protected void createInsertForm()
         {
-            formTable.Controls.Clear();
+            /*
+             * Creates asp:Table dynamically. This is done because different tables have different fields and thus require different forms.
+             * 
+             * Each row in the form corresponds to a different field in the table
+             * 
+             * Header Row: <h3> tag containing "Data Entry"
+             * Body Row: contains 4 cells
+             *          Label Cell (Label), Input Cell (TextBox), Required Field Validator Cell (RequiredFieldValidator), Regex Validator Cell (Regular ExpressionValidator)
+             *          
+             *          Label Cell: ID format is lbl_<tableName>_<fieldName>
+             *          Input Cell: ID format is txt_<tableName>_<fieldName>
+             *          Required Field Cell: ID format is validate_<tableName>_<fieldName>
+             *          Regex Validator Cell: ID format is validateType_<tableName>_<fieldName>
+             *          
+             * Footer Row: contains Submit button
+             * 
+             * */
             // add header
             TableHeaderRow headerRow = new TableHeaderRow();
             TableHeaderCell headerCell = new TableHeaderCell();
             HtmlGenericControl h3 = new HtmlGenericControl();
             h3.InnerHtml = "Data Entry";
+            h3.Style.Add("display", "inline");
             headerCell.Controls.Add(h3);
 
             headerRow.Cells.Add(headerCell);
@@ -258,17 +282,22 @@ namespace Test2
                 List<string> cols = db.getColumnNamesWithoutPk(this.selectedTable, conn);
                 string sql = db.getSqlInsert(cols, values, this.selectedTable);
                 SqlCommand command = db.getCommand(sql, conn);
-                command.ExecuteNonQuery();
+                int rowsAffected = command.ExecuteNonQuery();
                 db.closeOff(conn, command);
                 this.bindTable();
             }
             catch (Exception err)
             {
-                Response.Write(err.Message + "<br/>");
-            }
+                statusPanel.Style.Add("display", "inline");
+                HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                h3.InnerText = "DB Error";
+                statusPanel.Controls.Add(h3);
+                statusPanel.Controls.Add(new LiteralControl(err.Message));
 
-            Panel1.Style.Add("display", "none");
-            Panel2.Controls.Add(new LiteralControl("Data Submitted!"));
+            } finally
+            {
+                formPanel.Style.Add("display", "none");
+            }
         }
 
         List<string> getInsertValues(Control parent)
@@ -295,7 +324,7 @@ namespace Test2
 
         protected void addDataButton_Click(object sender, EventArgs e)
         {
-            Panel1.Style.Add("display", "inline");
+            formPanel.Style.Add("display", "inline");
         }
     }
 }

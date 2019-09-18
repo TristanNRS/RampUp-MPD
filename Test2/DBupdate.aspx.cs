@@ -8,6 +8,7 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Web;
 using System.Web.UI;
+using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
 
 namespace Test2
@@ -22,6 +23,8 @@ namespace Test2
         {
             if (!IsPostBack)
             {
+                statusPanel.Style.Add("display", "none");
+            
                 tableList.Items.Add(new ListItem("----", "----"));
                 this.loadTablesInDropdown();
             }
@@ -49,7 +52,12 @@ namespace Test2
             if (!tableList.SelectedItem.Value.ToString().Equals("----"))
             {
                 this.selectedTable = tableList.SelectedItem.Value.ToString();
+
+                statusPanel.Style.Add("display", "none");
+                statusPanel.Controls.Clear();
+
                 GridView1.Style.Add("display", "inline");
+                GridView1.PageIndex = 0;
                 this.bindTable();
             }
             else
@@ -72,46 +80,54 @@ namespace Test2
             this.bindTable();
         }
 
-        //protected bool isValidated(GridViewUpdateEventArgs e)
-        //{
-        //    Dictionary<string, Dictionary<string, string>> data = db.getTableMetadata(this.selectedTable);
-        //    IEnumerator iterator = e.NewValues.Values.GetEnumerator();
-        //    IEnumerator values = data.Values;
-        //    while (iterator.MoveNext() && iterator2.MoveNext())
-        //    {
-        //        if (db.validateInput(iterator.Current.ToString(), iterator2.Current))
-        //        {
+        protected bool isValidated(GridViewUpdateEventArgs e)
+        {
+            Dictionary<string, Dictionary<string, string>> data = db.getTableMetadata(this.selectedTable);
+            IEnumerator keyIterator = e.NewValues.Keys.GetEnumerator();
+            IEnumerator valIterator = e.NewValues.Values.GetEnumerator();
+            while (keyIterator.MoveNext() && valIterator.MoveNext())
+            {
+                string key = keyIterator.Current.ToString();
 
-        //        }
-        //    }
-        //}
+                var nextVal = valIterator.Current;
+                string valToValidate= nextVal != null ? nextVal.ToString() : string.Empty;
+
+                string validationResult = db.validateInput(valToValidate, key, data[key]);
+                if (!validationResult.Equals("Success"))
+                {
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "Validation Error";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl($"In column '{key}': {validationResult}"));
+                    return false;
+                }
+                    
+            }
+            return true;
+        }
 
         protected void GridView1_RowUpdating(object sender, GridViewUpdateEventArgs e)
         {
 
-            if(e.NewValues.Count > 0)
+            if(e.NewValues.Count > 0 && isValidated(e))
             {
                 string pkValue = GridView1.DataKeys[e.RowIndex].Value.ToString();
                 string pkName = GridView1.DataKeyNames.GetValue(0).ToString();
 
                 IEnumerator iterator = e.NewValues.Keys.GetEnumerator();
+                IEnumerator iterator2 = e.NewValues.Values.GetEnumerator();
                 List<string> keys = new List<string>();
                 List<string> newValues = new List<string>();
-
-                while (iterator.MoveNext())
+                
+                while (iterator.MoveNext() && iterator2.MoveNext())
                 {
                     keys.Add(iterator.Current.ToString());
-                    try
-                    {
-                        if (e.NewValues[iterator.Current.ToString()].ToString() != null && e.NewValues[iterator.Current.ToString()].ToString() != string.Empty)
-                            newValues.Add(e.NewValues[iterator.Current.ToString()].ToString());
-                    } catch(Exception err)
-                    {
-                        Response.Write("<br/>" + err.Message + "<br/>");
-                        newValues.Add(null);
-                    }
-                    
+                    var nextVal = iterator2.Current;
+                    string valToAdd = nextVal != null ? nextVal.ToString() : string.Empty;
+                    newValues.Add(valToAdd);
                 }
+            
                 string sql = db.getSqlUpdate(keys, newValues, pkName, pkValue, this.selectedTable);
                 try
                 {
@@ -124,7 +140,11 @@ namespace Test2
                 }
                 catch (Exception err)
                 {
-                    Response.Write(err.Message);
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "DB Error";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl(err.Message));
                 }
             }
         }
@@ -164,6 +184,7 @@ namespace Test2
                     {
                         if(count == 0)
                         {
+                            // set name of primary key
                             GridView1.DataKeyNames = new string[1] { colName };
                         }
                         Field = new BoundField();
@@ -185,7 +206,11 @@ namespace Test2
             }
             catch (Exception err)
             {
-                Response.Write(err);
+                statusPanel.Style.Add("display", "inline");
+                HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                h3.InnerText = "Error";
+                statusPanel.Controls.Add(h3);
+                statusPanel.Controls.Add(new LiteralControl(err.Message));
             }
 
         }
