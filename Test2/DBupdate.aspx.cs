@@ -11,6 +11,8 @@ using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
 
+// TODO: FIX REGEX for updating dates to include acceptance of times
+
 namespace Test2
 {
     public partial class DBupdate : System.Web.UI.Page
@@ -112,8 +114,14 @@ namespace Test2
 
             if(e.NewValues.Count > 0 && isValidated(e))
             {
-                string pkValue = GridView1.DataKeys[e.RowIndex].Value.ToString();
-                string pkName = GridView1.DataKeyNames.GetValue(0).ToString();
+                int numPrimaryKeys = GridView1.DataKeyNames.Length;
+
+                Dictionary<string, string> primaryKeys = new Dictionary<string, string>();
+
+                for (int i = 0; i < numPrimaryKeys; i += 1)
+                {
+                    primaryKeys.Add(GridView1.DataKeyNames.GetValue(i).ToString(), GridView1.DataKeys[e.RowIndex].Values[i].ToString());
+                }
 
                 IEnumerator iterator = e.NewValues.Keys.GetEnumerator();
                 IEnumerator iterator2 = e.NewValues.Values.GetEnumerator();
@@ -128,7 +136,7 @@ namespace Test2
                     newValues.Add(valToAdd);
                 }
             
-                string sql = db.getSqlUpdate(keys, newValues, pkName, pkValue, this.selectedTable);
+                string sql = db.getSqlUpdate(keys, newValues, primaryKeys, this.selectedTable);
                 try
                 {
                     SqlConnection conn = db.getConnection();
@@ -165,6 +173,12 @@ namespace Test2
                 conn.Open();
 
                 List<string> colNames = db.getAllColumnNames(this.selectedTable, conn);
+                List<string> primaryKeys = db.getPrimaryKeys(this.selectedTable);
+                List<string> foreignKeys = db.getForeignKeys(this.selectedTable);
+
+                // set name of primary key
+                if (primaryKeys != null)
+                    GridView1.DataKeyNames = primaryKeys.ToArray();
 
                 string sql = $"SELECT * FROM [dbo].[{this.selectedTable}]";
 
@@ -179,23 +193,24 @@ namespace Test2
                 {
                     BoundField Field;
                     DataControlField Col;
-                    int count = 0;
                     colNames.ForEach((colName) =>
                     {
-                        if(count == 0)
-                        {
-                            // set name of primary key
-                            GridView1.DataKeyNames = new string[1] { colName };
-                        }
                         Field = new BoundField();
+                        if (primaryKeys != null && primaryKeys.Contains(colName))
+                        {
+                            Field.Visible = false;
+                            if (foreignKeys != null && foreignKeys.Contains(colName))
+                                Field.Visible = true;
+
+                        }
+                        else
+                            Field.Visible = true;
 
                         Field.DataField = Field.HeaderText = colName;
-                        Field.Visible = count != 0;
 
                         Col = Field;
                         GridView1.Columns.Add(Col);
 
-                        count += 1;
                     });
                     GridView1.DataSource = dt;
 

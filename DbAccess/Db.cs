@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace DbAccess
 {
@@ -31,7 +32,7 @@ namespace DbAccess
                         pattern = "^\\d{3}-\\d{4}$";
                         break;
                     case "date":
-                        pattern = "((0?[13578]|10|12)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[01]?))(-|\\/)((\\d{4})|(\\d{2}))|(0?[2469]|11)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[0]?))(-|\\/)((\\d{4}|\\d{2})))";
+                        pattern = ".+";
                         break;
                     case "time":
                         pattern = ".+";
@@ -153,21 +154,33 @@ namespace DbAccess
             return sql;
         }
 
-        public string getSqlUpdate(List<string> cols, List<string> newValues,string pkName ,string pkValue, string tableName)
+        public string getSqlUpdate(List<string> cols, List<string> newValues, Dictionary<string, string> primaryKeys, string tableName)
         {
             string sql = $"UPDATE [dbo].[{tableName}] SET ";
             int count = 1;
             cols.ForEach((string colName) =>
             {
                 string newValue = newValues.ElementAt(count - 1);
-                //newValue = newValue.Length > 0 ? newValue : null;
                 if (count < cols.Count)
                     sql += newValue != string.Empty ? $"[{colName}]= '{newValue}', " : $"[{colName}]= NULL,";
                 else if (count == cols.Count)
                     sql += newValue != string.Empty ? $"[{colName}]= '{newValue}' " : $"[{colName}]= NULL ";
                 count += 1;
             });
-            sql += $"WHERE [{pkName}]={pkValue}";
+
+            sql += "WHERE ";
+
+            count = 1;
+            List<string> keys = primaryKeys.Keys.ToList();
+            keys.ForEach((string key) =>
+            {
+                if (count < keys.Count)
+                    sql += $"{key} = {primaryKeys[key]} AND ";
+                else if (count == cols.Count)
+                    sql += $"{key} = {primaryKeys[key]}";
+                count += 1;
+            });
+
             
             return sql;
         }
@@ -202,6 +215,88 @@ namespace DbAccess
             }
         }
 
+        public List<string> getPrimaryKeys(string table)
+        {
+            try
+            {
+                SqlConnection cnn = this.getConnection();
+                cnn.Open();
+
+                List<string> primaryKeys = new List<string>();
+                string sqlPk = $@"
+                        SELECT K.COLUMN_NAME
+                        FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C
+                        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.TABLE_NAME = K.TABLE_NAME
+                            AND C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG
+                            AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA
+                            AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
+                        WHERE C.CONSTRAINT_TYPE = 'PRIMARY KEY'
+                            AND K.TABLE_NAME = '{table}';
+                    ";
+                SqlCommand commandPk = this.getCommand(sqlPk, cnn);
+                SqlDataReader dataReaderPk = this.getDataReader(commandPk);
+
+                while (dataReaderPk.Read())
+                {
+                    primaryKeys.Add(dataReaderPk["COLUMN_NAME"].ToString());
+                }
+
+                // close off connections
+                this.closeOff(cnn, commandPk, dataReaderPk);
+
+                if(primaryKeys.Count > 0)
+                    return primaryKeys;
+                return null;
+            }
+            catch (Exception err)
+            {
+                Console.Write(err.Message);
+                return null; 
+            }
+
+        }
+
+        public List<string> getForeignKeys(string table)
+        {
+            try
+            {
+                SqlConnection cnn = this.getConnection();
+                cnn.Open();
+
+                List<string> foreignKeys = new List<string>();
+                string sqlFk = $@"
+                        SELECT K.COLUMN_NAME
+                        FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS C
+                        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS K ON C.TABLE_NAME = K.TABLE_NAME
+                            AND C.CONSTRAINT_CATALOG = K.CONSTRAINT_CATALOG
+                            AND C.CONSTRAINT_SCHEMA = K.CONSTRAINT_SCHEMA
+                            AND C.CONSTRAINT_NAME = K.CONSTRAINT_NAME
+                        WHERE C.CONSTRAINT_TYPE = 'FOREIGN KEY'
+                            AND K.TABLE_NAME = '{table}';
+                    ";
+                SqlCommand commandFk = this.getCommand(sqlFk, cnn);
+                SqlDataReader dataReaderFk = this.getDataReader(commandFk);
+
+                while (dataReaderFk.Read())
+                {
+                    foreignKeys.Add(dataReaderFk["COLUMN_NAME"].ToString());
+                }
+
+                // close off connections
+                this.closeOff(cnn, commandFk, dataReaderFk);
+
+                if (foreignKeys.Count > 0)
+                    return foreignKeys;
+                return null;
+            }
+            catch(Exception err)
+            {
+                Console.Write(err.Message);
+                return null;
+            }
+
+        }
+
         public Dictionary<string, Dictionary<string, string>> getTableMetadata(string table, SqlConnection cnn = null)
         {
             // returns dictionary with following format :
@@ -214,7 +309,9 @@ namespace DbAccess
              *      },
              *      columnName: {
              *          dataType: <string>,
-             *          isRequired: <string>
+             *          isRequired: <string: Y|N>,
+             *          isPrimaryKey: <string: Y|N>,
+             *          isForeignKey: <string: Y|N>
              *      }
              * }
              * 
@@ -232,16 +329,35 @@ namespace DbAccess
                 string sql = $"select COLUMN_NAME, DATA_TYPE, IS_NULLABLE from information_schema.columns where TABLE_NAME = N'{table}'";
                 SqlCommand command = this.getCommand(sql, cnn);
                 SqlDataReader dataReader = this.getDataReader(command);
+
+                List<string> primaryKeys = this.getPrimaryKeys(table);
+                List<string> foreignKeys = this.getForeignKeys(table);
+
                 int count = 0;
                 while (dataReader.Read())
                 {
+                    string colName = dataReader["COLUMN_NAME"].ToString();
+                    // dataType
                     Dictionary<string, string> props = new Dictionary<string, string>();
                     props.Add("dataType", dataReader["DATA_TYPE"].ToString());
 
+                    // isRequired
                     string isRequired = dataReader["IS_NULLABLE"].ToString().Equals("YES") ? "N" : "Y";
                     props.Add("isRequired", isRequired);
 
-                    data.Add(dataReader["COLUMN_NAME"].ToString(), props );
+                    // isPrimaryKey
+                    if (primaryKeys != null && primaryKeys.Contains(colName))
+                        props.Add("isPrimaryKey", "Y");
+                    else
+                        props.Add("isPrimaryKey", "N");
+
+                    // isForeignKey
+                    if (foreignKeys != null && foreignKeys.Contains(colName))
+                        props.Add("isForeignKey", "Y");
+                    else
+                        props.Add("isForeignKey", "N");
+
+                    data.Add(colName, props );
                     count += 1;
                 }
 
@@ -267,11 +383,20 @@ namespace DbAccess
             return new List<string>(data.Keys);
         }
 
-        public List<string> getColumnNamesWithoutPk(string table=null, SqlConnection cnn = null, Dictionary<string, Dictionary<string, string>> data=null)
+        public List<string> getEditableInsertableColumnNames(string table=null, SqlConnection cnn = null, Dictionary<string, Dictionary<string, string>> data=null)
         {
             if(data == null)
                 data = this.getTableMetadata(table, cnn);
-            return new List<string>(data.Keys.Skip(1));
+
+            List<string> colNames = new List<string>();
+            foreach(var kvp in data)
+            {
+                Dictionary<string, string> props = kvp.Value;
+                if (props["isPrimaryKey"].Equals("N") || (props["isPrimaryKey"].Equals("Y") && props["isForeignKey"].Equals("Y")))
+                    colNames.Add(kvp.Key);
+            }
+            
+            return colNames.Count > 0 ? colNames : null;
         }
 
         public SqlConnection getConnection()

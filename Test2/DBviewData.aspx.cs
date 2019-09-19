@@ -85,7 +85,7 @@ namespace Test2
 
                 if (dt.Rows.Count > 0)
                 {
-                    List<string> colNames = db.getColumnNamesWithoutPk(this.selectedTable, conn);
+                    List<string> colNames = db.getAllColumnNames(this.selectedTable, conn);
                     BoundField Field;
                     DataControlField Col;
                     colNames.ForEach((colName) =>

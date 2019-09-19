@@ -86,41 +86,57 @@ namespace Test2
 
                 conn.Open();
 
-                List<string> colNames = db.getColumnNamesWithoutPk(this.selectedTable, conn);
+                List<string> colNames = db.getEditableInsertableColumnNames(this.selectedTable, conn);
 
-                string sql = db.getSqlSelect(colNames, this.selectedTable);
-
-                SqlCommand cmd = db.getCommand(sql, conn);
-
-                SqlDataAdapter ad = new SqlDataAdapter(cmd);
-
-                DataTable dt = new DataTable();
-                ad.Fill(dt);
-
-                if (dt.Rows.Count > 0)
+                if(colNames != null)
                 {
-                    BoundField Field;
-                    DataControlField Col;
-                    colNames.ForEach((colName) =>
+                    string sql = db.getSqlSelect(colNames, this.selectedTable);
+
+                    SqlCommand cmd = db.getCommand(sql, conn);
+
+                    SqlDataAdapter ad = new SqlDataAdapter(cmd);
+
+                    DataTable dt = new DataTable();
+                    ad.Fill(dt);
+
+                    if (dt.Rows.Count > 0)
                     {
-                        Field = new BoundField();
+                        BoundField Field;
+                        DataControlField Col;
+                        colNames.ForEach((colName) =>
+                        {
+                            Field = new BoundField();
 
-                        Field.DataField = Field.HeaderText = colName;
+                            Field.DataField = Field.HeaderText = colName;
 
-                        Col = Field;
+                            Col = Field;
 
-                        GridView1.Columns.Add(Col);
-                    });
-                    GridView1.DataSource = dt;
+                            GridView1.Columns.Add(Col);
+                        });
+                        GridView1.DataSource = dt;
 
-                    GridView1.DataBind();
+                        GridView1.DataBind();
+                    }
+
+                    conn.Close();
+                } else
+                {
+                    GridView1.Style.Add("display", "none");
+                    addDataButton.Style.Add("display", "none");
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "Table Error";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl($"No data to show for {this.selectedTable}"));
                 }
-
-                conn.Close();
             }
             catch (Exception err)
             {
-                Response.Write(err);
+                statusPanel.Style.Add("display", "inline");
+                HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                h3.InnerText = "Bind Table Error";
+                statusPanel.Controls.Add(h3);
+                statusPanel.Controls.Add(new LiteralControl(err.Message));
             }
 
         }
@@ -163,112 +179,117 @@ namespace Test2
 
             // add body
             Dictionary<string, Dictionary<string, string>> data = db.getTableMetadata(this.selectedTable);
-            List<string> colNames = db.getColumnNamesWithoutPk(null, null, data);
-            colNames.ForEach((colName) =>
+            List<string> colNames = db.getEditableInsertableColumnNames(null, null, data);
+            if(colNames != null)
             {
-                TableRow tr = new TableRow();
-
-                TableCell labelCell = new TableCell();
-                // create label 
-                Label label = new Label();
-                label.ID = $"lbl_{this.selectedTable}_{colName}";
-                label.Text = $"Enter {colName}: ";
-                // add label to label cell
-                labelCell.Controls.Add(label);
-
-                // create textbox
-                TableCell inputCell = new TableCell();
-                TextBox txt = new TextBox();
-                txt.ID = $"txt_{this.selectedTable}_{colName}";
-                txt.Style.Add("width", "250px");
-                if (colName.Equals("description"))
-                    txt.TextMode = TextBoxMode.MultiLine;
-                txt.Text = string.Empty;
-
-                // add textbox to input cell
-                inputCell.Controls.Add(txt);
-
-                // add label and textbox to row
-                tr.Cells.Add(labelCell);
-                tr.Cells.Add(inputCell);
-
-                // create validator
-                Dictionary<string, string> props = data[colName];
-
-
-                // add required validator for fields that cannot be null
-                TableCell reqFieldValidateCell = new TableCell();
-                string isRequired = props["isRequired"];
-                if (isRequired.Equals("Y"))
+                colNames.ForEach((colName) =>
                 {
-                    RequiredFieldValidator validator = new RequiredFieldValidator();
-                    validator.ID = $"validate_{this.selectedTable}_{colName}";
-                    validator.ControlToValidate = txt.ID;
-                    validator.Display = ValidatorDisplay.Dynamic;
-                    validator.ErrorMessage = "Required Field";
-                    validator.ForeColor = System.Drawing.Color.Red;
+                    TableRow tr = new TableRow();
+
+                    TableCell labelCell = new TableCell();
+                    // create label 
+                    Label label = new Label();
+                    label.ID = $"lbl_{this.selectedTable}_{colName}";
+                    label.Text = $"Enter {colName}: ";
+                    // add label to label cell
+                    labelCell.Controls.Add(label);
+
+                    // create textbox
+                    TableCell inputCell = new TableCell();
+                    TextBox txt = new TextBox();
+                    txt.ID = $"txt_{this.selectedTable}_{colName}";
+                    txt.Style.Add("width", "250px");
+                    if (colName.Equals("description"))
+                        txt.TextMode = TextBoxMode.MultiLine;
+                    txt.Text = string.Empty;
+
+                    // add textbox to input cell
+                    inputCell.Controls.Add(txt);
+
+                    // add label and textbox to row
+                    tr.Cells.Add(labelCell);
+                    tr.Cells.Add(inputCell);
+
+                    // create validator
+                    Dictionary<string, string> props = data[colName];
+
+
+                    // add required validator for fields that cannot be null
+                    TableCell reqFieldValidateCell = new TableCell();
+                    string isRequired = props["isRequired"];
+                    if (isRequired.Equals("Y"))
+                    {
+                        RequiredFieldValidator validator = new RequiredFieldValidator();
+                        validator.ID = $"validate_{this.selectedTable}_{colName}";
+                        validator.ControlToValidate = txt.ID;
+                        validator.Display = ValidatorDisplay.Dynamic;
+                        validator.ErrorMessage = "Required Field";
+                        validator.ForeColor = System.Drawing.Color.Red;
+
+                        // add validator to input cell
+                        reqFieldValidateCell.Controls.Add(validator);
+
+                        // add validator to row
+                        tr.Cells.Add(reqFieldValidateCell);
+                    }
+
+                    // add type validator
+                    TableCell typeValidateCell = new TableCell();
+                    string type = db.mapDbTypeToInputType(props["dataType"], colName);
+                    RegularExpressionValidator typeValidator = new RegularExpressionValidator();
+                    typeValidator.ID = $"validateType_{this.selectedTable}_{colName}";
+                    typeValidator.ControlToValidate = txt.ID;
+                    typeValidator.ErrorMessage = $"Wrong type: expected {type}";
+                    typeValidator.ForeColor = System.Drawing.Color.Red;
+
+                    switch (type)
+                    {
+                        case "int":
+                            typeValidator.ValidationExpression = "^\\d+$";
+                            break;
+                        case "float":
+                            typeValidator.ValidationExpression = "[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)";
+                            break;
+                        case "email":
+                            typeValidator.ValidationExpression = ".+";
+                            break;
+                        case "phoneNumber":
+                            typeValidator.ValidationExpression = "^\\d{3}-\\d{4}$";
+                            break;
+                        case "date":
+                            typeValidator.ValidationExpression = "((0?[13578]|10|12)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[01]?))(-|\\/)((\\d{4})|(\\d{2}))|(0?[2469]|11)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[0]?))(-|\\/)((\\d{4}|\\d{2})))";
+                            break;
+                        case "time":
+                            typeValidator.ValidationExpression = ".+";
+                            break;
+                        case "string":
+                            typeValidator.ValidationExpression = ".+";
+                            break;
+                    }
 
                     // add validator to input cell
-                    reqFieldValidateCell.Controls.Add(validator);
+                    typeValidateCell.Controls.Add(typeValidator);
 
                     // add validator to row
-                    tr.Cells.Add(reqFieldValidateCell);
-                }
+                    tr.Cells.Add(typeValidateCell);
 
-                // add type validator
-                TableCell typeValidateCell = new TableCell();
-                string type = db.mapDbTypeToInputType(props["dataType"], colName);
-                RegularExpressionValidator typeValidator = new RegularExpressionValidator();
-                typeValidator.ID = $"validateType_{this.selectedTable}_{colName}";
-                typeValidator.ControlToValidate = txt.ID;
-                typeValidator.ErrorMessage = $"Wrong type: expected {type}";
-                typeValidator.ForeColor = System.Drawing.Color.Red;
+                    tr.Attributes.Add("TableSection", "TableBody");
 
-                switch (type){
-                    case "int":
-                        typeValidator.ValidationExpression = "^\\d+$";
-                        break;
-                    case "float":
-                        typeValidator.ValidationExpression = "[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)";
-                        break;
-                    case "email":
-                        typeValidator.ValidationExpression = ".+";
-                        break;
-                    case "phoneNumber":
-                        typeValidator.ValidationExpression = "^\\d{3}-\\d{4}$";
-                        break;
-                    case "date":
-                        typeValidator.ValidationExpression = "((0?[13578]|10|12)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[01]?))(-|\\/)((\\d{4})|(\\d{2}))|(0?[2469]|11)(-|\\/)((0[0-9])|([12])([0-9]?)|(3[0]?))(-|\\/)((\\d{4}|\\d{2})))";
-                        break;
-                    case "time":
-                        typeValidator.ValidationExpression = ".+";
-                        break;
-                    case "string":
-                        typeValidator.ValidationExpression = ".+";
-                        break;
-                }
+                    // Add row to the table.
+                    formTable.Rows.Add(tr);
+                });
 
-                // add validator to input cell
-                typeValidateCell.Controls.Add(typeValidator);
+                // add footer
+                TableFooterRow footerRow = new TableFooterRow();
+                TableCell footerCell = new TableCell();
+                Button submitButton = new Button();
+                submitButton.Text = "Submit";
+                submitButton.Click += SubmitButton_Click;
+                footerCell.Controls.Add(submitButton);
+                footerRow.Cells.Add(footerCell);
+                formTable.Rows.Add(footerRow);
+            }
 
-                // add validator to row
-                tr.Cells.Add(typeValidateCell);
-
-                tr.Attributes.Add("TableSection", "TableBody");
-
-                // Add row to the table.
-                formTable.Rows.Add(tr);
-            });
-
-            // add footer
-            TableFooterRow footerRow = new TableFooterRow();
-            TableCell footerCell = new TableCell();
-            Button submitButton = new Button();
-            submitButton.Text = "Submit";
-            submitButton.Click += SubmitButton_Click;
-            footerCell.Controls.Add(submitButton);
-            footerRow.Cells.Add(footerCell);
-            formTable.Rows.Add(footerRow);
         }
 
         private void SubmitButton_Click(object sender, EventArgs e)
@@ -279,7 +300,7 @@ namespace Test2
                 SqlConnection conn = db.getConnection();
                 conn.Open();
                 List<string> values = this.getInsertValues(formTable);
-                List<string> cols = db.getColumnNamesWithoutPk(this.selectedTable, conn);
+                List<string> cols = db.getEditableInsertableColumnNames(this.selectedTable, conn);
                 string sql = db.getSqlInsert(cols, values, this.selectedTable);
                 SqlCommand command = db.getCommand(sql, conn);
                 int rowsAffected = command.ExecuteNonQuery();

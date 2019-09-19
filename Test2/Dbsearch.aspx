@@ -4,7 +4,7 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     Choose Table:<br />
     <asp:DropDownList ID="tableList" runat="server" OnSelectedIndexChanged="tableList_SelectedIndexChanged" AutoPostBack="true" style="margin: 15px 0px;"></asp:DropDownList>
-    <asp:TextBox ID="searchBox" runat="server" OnTextChanged="searchBox_TextChanged"></asp:TextBox>
+    <asp:TextBox ID="searchBox" runat="server" OnTextChanged="searchBox_TextChanged" AutoPostBack="true"></asp:TextBox>
     <asp:GridView ID="GridView1" runat="server" 
         CellPadding="10" 
         AutoGenerateColumns="false" 
