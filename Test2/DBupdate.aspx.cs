@@ -230,5 +230,13 @@ namespace Test2
 
         }
 
+        protected void GridView1_RowUpdated(object sender, GridViewUpdatedEventArgs e)
+        {
+            statusPanel.Style.Add("display", "inline");
+            HtmlGenericControl h3 = new HtmlGenericControl("h3");
+            h3.InnerText = "Success";
+            statusPanel.Controls.Add(h3);
+            statusPanel.Controls.Add(new LiteralControl($"Record successfully updated"));
+        }
     }
 }

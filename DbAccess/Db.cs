@@ -176,12 +176,29 @@ namespace DbAccess
             {
                 if (count < keys.Count)
                     sql += $"{key} = {primaryKeys[key]} AND ";
-                else if (count == cols.Count)
+                else
                     sql += $"{key} = {primaryKeys[key]}";
                 count += 1;
             });
 
             
+            return sql;
+        }
+
+        public string getSqlDelete(Dictionary<string, string> primaryKeys, string tableName)
+        {
+            string sql = $"DELETE FROM [dbo].[{tableName}] WHERE ";
+            int count = 1;
+            List<string> keys = primaryKeys.Keys.ToList();
+            keys.ForEach((string key) =>
+            {
+                if (count < keys.Count)
+                    sql += $"{key} = {primaryKeys[key]} AND ";
+                else 
+                    sql += $"{key} = {primaryKeys[key]}";
+                count += 1;
+            });
+
             return sql;
         }
 
