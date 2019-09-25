@@ -13,6 +13,15 @@ namespace Test2 {
     public partial class Dbsearch {
         
         /// <summary>
+        /// authorizationPanel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel authorizationPanel;
+        
+        /// <summary>
         /// tableList control.
         /// </summary>
         /// <remarks>

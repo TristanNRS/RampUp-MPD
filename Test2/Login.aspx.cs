@@ -12,10 +12,10 @@ namespace Test2
     {
         protected void Page_Load(object sender, EventArgs e)
         {
-
+            dbLogin();
         }
 
-        protected void dbLogin_Click(object sender, EventArgs e)
+        protected void dbLogin()
         {
             Auth auth = new Auth();
             string username = auth.getCurrentAdUser();
@@ -37,22 +37,27 @@ namespace Test2
                 SqlCommand command = db.getCommand(sql, cnn);
                 SqlDataReader dataReader = db.getDataReader(command);
 
-                while (dataReader.Read())
+                if (auth.isCurrentUserInActiveDirectory())
                 {
-                    if (dataReader.GetValue(0).ToString().Trim().Equals(username) && auth.isCurrentUserInActiveDirectory())
+                    while (dataReader.Read())
                     {
-                        // set cookie 
-                        FormsAuthenticationTicket tkt = new FormsAuthenticationTicket(1, username, DateTime.Now, DateTime.Now.AddMinutes(30), false, dataReader.GetValue(1).ToString());
-                        string cookiestr = FormsAuthentication.Encrypt(tkt);
-                        HttpCookie ck = new HttpCookie(FormsAuthentication.FormsCookieName, cookiestr);
-                        ck.Path = FormsAuthentication.FormsCookiePath;
-                        Response.Cookies.Add(ck);
+                        if (dataReader["Name"].ToString().Trim().Equals(username))
+                        {
+                            // set cookie 
+                            FormsAuthenticationTicket tkt = new FormsAuthenticationTicket(1, username, DateTime.Now, DateTime.Now.AddMinutes(30), false, dataReader.GetValue(1).ToString());
+                            string cookiestr = FormsAuthentication.Encrypt(tkt);
+                            HttpCookie ck = new HttpCookie(FormsAuthentication.FormsCookieName, cookiestr);
+                            ck.Path = FormsAuthentication.FormsCookiePath;
+                            Response.Cookies.Add(ck);
 
-                        string strRedirect = Request["ReturnUrl"];
-                        if (strRedirect == null)
-                            strRedirect = "Default.aspx";
-                        Response.Redirect(strRedirect, true);
-                        break;
+                            Session["role"] = dataReader["Group"].ToString();
+
+                            string strRedirect = Request["ReturnUrl"];
+                            if (strRedirect == null)
+                                strRedirect = "Default.aspx";
+                            Response.Redirect(strRedirect, true);
+                            break;
+                        }
                     }
                 }
 

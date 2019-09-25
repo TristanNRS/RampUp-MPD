@@ -13,12 +13,10 @@ namespace Test2
             if ((username = auth.getUsername()) != null)
             {
                 authResult.Text =  username;
-                logout.Style.Add("display", "inline");
             }
             else
             {
                 authResult.Text = "ACCESS DENIED";
-                logout.Style.Add("display", "none");
             }
 
 

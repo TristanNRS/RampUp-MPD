@@ -1,4 +1,5 @@
-﻿using System.DirectoryServices;
+﻿using System.Collections.Generic;
+using System.DirectoryServices;
 using System.Web;
 
 namespace Authentication
@@ -40,6 +41,12 @@ namespace Authentication
             string loginName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
             return loginName.Replace("PLANNING\\", "");
         }
+
+        public bool isAuthorized(string role, List<string> authorizationNeeded)
+        {
+            return authorizationNeeded.Contains(role);
+        }
+
 
     }
 }

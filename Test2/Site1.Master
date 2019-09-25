@@ -21,9 +21,6 @@
                         <td>
                             <asp:TextBox ID="authResult" runat="server" Height="16px" Width="110px" BorderStyle="None" style="display:inline; margin-right:10px;"></asp:TextBox> 
                         </td>
-                        <td>
-                            <asp:Button ID="logout" runat="server" Text="Log out" style="width:65px; display:none;" OnClick="logout_Click"/>
-                        </td>
                     </tr>
                 </table>
                 

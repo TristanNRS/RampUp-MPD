@@ -7,7 +7,7 @@ using System.Data.SqlClient;
 using System.Data;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
-
+using Authentication;
 
 namespace Test2
 {
@@ -15,26 +15,49 @@ namespace Test2
     {
         private Db db = new Db();
         private string selectedTable;
+        private bool isAuthorized;
 
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-                formPanel.Style.Add("display", "none");
-                statusPanel.Style.Add("display", "none");
-                addDataButton.Style.Add("display", "none");
-                searchBox.Style.Add("display", "none");
+                Auth auth = new Auth();
+                List<string> authorizedRoles = new List<string>() { "ADMIN" };
+                this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
 
-                tableList.Items.Add(new ListItem("----", "----"));
-                this.loadTablesInDropdown();
+                if (this.isAuthorized)
+                {
+                    authorizationPanel.Style.Add("display", "inline");
+
+                    formPanel.Style.Add("display", "none");
+                    statusPanel.Style.Add("display", "none");
+                    addDataButton.Style.Add("display", "none");
+                    searchBox.Style.Add("display", "none");
+
+                    tableList.Items.Add(new ListItem("----", "----"));
+                    this.loadTablesInDropdown();
+                } else
+                {
+                    authorizationPanel.Style.Add("display", "none");
+
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "Unauthorized Access";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl("Current user does not have authorization to access this page"));
+                }
             } else
             {
-                this.selectedTable = (string)ViewState["selectedTable"];
-                if(selectedTable != null)
+                if (this.isAuthorized)
                 {
-                    this.createInsertForm();
-                    this.bindTable();
+                    this.selectedTable = (string)ViewState["selectedTable"];
+                    if(selectedTable != null)
+                    {
+                        this.createInsertForm();
+                        this.bindTable();
+                    }
                 }
+               
             }
 
         }

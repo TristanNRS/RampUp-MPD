@@ -1,4 +1,5 @@
-﻿using DbAccess;
+﻿using Authentication;
+using DbAccess;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,24 +21,47 @@ namespace Test2
 
         private Db db = new Db();
         private string selectedTable;
+        private bool isAuthorized;
 
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
             {
-                statusPanel.Style.Add("display", "none");
-                searchBox.Style.Add("display", "none");
+                Auth auth = new Auth();
+                List<string> authorizedRoles = new List<string>() { "ADMIN" };
+                this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
 
-                tableList.Items.Add(new ListItem("----", "----"));
-                this.loadTablesInDropdown();
+                if (this.isAuthorized)
+                {
+                    authorizationPanel.Style.Add("display", "inline");
+
+                    statusPanel.Style.Add("display", "none");
+                    searchBox.Style.Add("display", "none");
+
+                    tableList.Items.Add(new ListItem("----", "----"));
+                    this.loadTablesInDropdown();
+                } else
+                {
+                    authorizationPanel.Style.Add("display", "none");
+
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "Unauthorized Access";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl("Current user does not have authorization to access this page"));
+                }
             }
             else
             {
-                this.selectedTable = (string)ViewState["selectedTable"];
-                if(this.selectedTable != null)
+
+                if (this.isAuthorized)
                 {
-                    string sql = (string)ViewState["isSearch"];
-                    this.bindTable(sql);
+                    this.selectedTable = (string)ViewState["selectedTable"];
+                    if (this.selectedTable != null)
+                    {
+                        string sql = (string)ViewState["isSearch"];
+                        this.bindTable(sql);
+                    }
                 }
             }
         }
