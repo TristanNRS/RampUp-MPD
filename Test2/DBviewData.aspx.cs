@@ -21,11 +21,12 @@ namespace Test2
             if (!IsPostBack)
             {
                 statusPanel.Style.Add("display", "none");
+                searchBox.Style.Add("display", "none");
                 tableList.Items.Add(new ListItem("----", "----"));
                 this.loadTablesInDropdown();
             } else
             {
-                this.selectedTable = (string)ViewState["this.selectedTable"];
+                this.selectedTable = (string)ViewState["selectedTable"];
                 if (this.selectedTable != null)
                 {
                     this.bindTable();
@@ -54,18 +55,23 @@ namespace Test2
                 statusPanel.Style.Add("display", "none");
                 statusPanel.Controls.Clear();
 
+                searchBox.Style.Add("display", "inline");
+                searchBox.Text = string.Empty;
+
                 GridView1.Style.Add("display", "inline");
                 GridView1.PageIndex = 0;
                 this.bindTable();
             } else
             {
                 GridView1.Style.Add("display", "none");
+
+                searchBox.Style.Add("display", "none");
             }
 
-            ViewState["this.selectedTable"] = this.selectedTable;
+            ViewState["selectedTable"] = this.selectedTable;
         }
 
-        private void bindTable()
+        private void bindTable(string sql = null)
         {
             GridView1.Columns.Clear();
             try
@@ -73,8 +79,8 @@ namespace Test2
                 SqlConnection conn = db.getConnection();
 
                 conn.Open();
-
-                string sql = $"SELECT * FROM {this.selectedTable}";
+                if(sql == null)
+                    sql = $"SELECT * FROM {this.selectedTable}";
 
                 SqlCommand cmd = db.getCommand(sql, conn);
 
@@ -101,6 +107,9 @@ namespace Test2
                     GridView1.DataSource = dt;
 
                     GridView1.DataBind();
+                } else
+                    {
+                    GridView1.DataSource = null;
                 }
 
                 conn.Close();
@@ -118,7 +127,34 @@ namespace Test2
         public void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             GridView1.PageIndex = e.NewPageIndex;
-            bindTable();
+            this.bindTable();
+        }
+
+        protected void searchBox_TextChanged(object sender, EventArgs e)
+        {
+            string searchText = searchBox.Text;
+
+            if (!searchText.Length.Equals(string.Empty))
+            {
+                List<string> cols = db.getEditableInsertableColumnNames(this.selectedTable);
+                string sql = db.getSqlSearch(searchText, cols, this.selectedTable);
+                this.bindTable(sql);
+
+                if (GridView1.DataSource == null)
+                {
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "Search Status";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl($"No records to display for {searchText}"));
+                } else
+                {
+
+                }
+            } else
+            {
+                this.bindTable();
+            }
         }
 
 

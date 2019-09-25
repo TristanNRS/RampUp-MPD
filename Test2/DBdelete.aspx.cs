@@ -22,12 +22,19 @@ namespace Test2
             {
                 statusPanel.Style.Add("display", "none");
 
+                searchBox.Style.Add("display", "none");
+
                 tableList.Items.Add(new ListItem("----", "----"));
                 this.loadTablesInDropdown();
             }
             else
             {
                 this.selectedTable = (string)ViewState["selectedTable"];
+                if (this.selectedTable != null)
+                {
+                    string sql = (string)ViewState["isSearch"];
+                    this.bindTable(sql);
+                }
             }
         }
 
@@ -45,6 +52,7 @@ namespace Test2
 
         protected void tableList_SelectedIndexChanged(object sender, EventArgs e)
         {
+            ViewState["isSearch"] = null;
             // get all data from selected table
             if (!tableList.SelectedItem.Value.ToString().Equals("----"))
             {
@@ -53,19 +61,24 @@ namespace Test2
                 statusPanel.Style.Add("display", "none");
                 statusPanel.Controls.Clear();
 
+                searchBox.Style.Add("display", "inline");
+                searchBox.Text = string.Empty;
+
                 GridView1.Style.Add("display", "inline");
                 GridView1.PageIndex = 0;
                 this.bindTable();
             }
             else
             {
+                searchBox.Style.Add("display", "none");
+
                 GridView1.Style.Add("display", "none");
                 this.selectedTable = null;
             }
             ViewState["selectedTable"] = this.selectedTable;
         }
 
-        private void bindTable()
+        private void bindTable(string sql = null)
         {
             GridView1.Columns.Clear();
             try
@@ -82,7 +95,8 @@ namespace Test2
                 if (primaryKeys != null)
                     GridView1.DataKeyNames = primaryKeys.ToArray();
 
-                string sql = $"SELECT * FROM [dbo].[{this.selectedTable}]";
+                if(sql == null)
+                    sql = $"SELECT * FROM [dbo].[{this.selectedTable}]";
 
                 SqlCommand cmd = db.getCommand(sql, conn);
 
@@ -98,16 +112,6 @@ namespace Test2
                     colNames.ForEach((colName) =>
                     {
                         Field = new BoundField();
-                        //if (primaryKeys != null && primaryKeys.Contains(colName))
-                        //{
-                        //    Field.Visible = false;
-                        //    if (foreignKeys != null && foreignKeys.Contains(colName))
-                        //        Field.Visible = true;
-
-                        //}
-                        //else
-                        //    Field.Visible = true;
-
                         Field.DataField = Field.HeaderText = colName;
 
                         Col = Field;
@@ -117,6 +121,9 @@ namespace Test2
                     GridView1.DataSource = dt;
 
                     GridView1.DataBind();
+                } else
+                {
+                    GridView1.DataSource = null;
                 }
 
                 conn.Close();
@@ -166,7 +173,37 @@ namespace Test2
         protected void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             GridView1.PageIndex = e.NewPageIndex;
-            bindTable();
+            string sql = (string)ViewState["isSearch"];
+            this.bindTable(sql);
+        }
+
+        protected void searchBox_TextChanged(object sender, EventArgs e)
+        {
+            string searchText = searchBox.Text;
+
+            if (!searchText.Length.Equals(string.Empty))
+            {
+                List<string> cols = db.getEditableInsertableColumnNames(this.selectedTable);
+                string sql = db.getSqlSearch(searchText, cols, this.selectedTable);
+                this.bindTable(sql);
+
+                ViewState["isSearch"] = sql;
+
+                if (GridView1.DataSource == null)
+                {
+                    ViewState["isSearch"] = null;
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "Search Status";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl($"No records to display for {searchText}"));
+                }
+            }
+            else
+            {
+                ViewState["isSearch"] = null;
+                this.bindTable();
+            }
         }
     }
 }

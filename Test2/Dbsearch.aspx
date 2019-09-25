@@ -5,7 +5,7 @@
     Choose Table:<br />
     <asp:DropDownList ID="tableList" runat="server" OnSelectedIndexChanged="tableList_SelectedIndexChanged" AutoPostBack="true" style="margin: 15px 0px;"></asp:DropDownList>
     <asp:TextBox ID="searchBox" runat="server" OnTextChanged="searchBox_TextChanged" AutoPostBack="true"></asp:TextBox>
-    <asp:GridView ID="GridView1" runat="server" 
+    <asp:GridView ID="GridView1" runat="server" EnableViewState="false" GridLines="None"
         CellPadding="10" 
         AutoGenerateColumns="false" 
         AllowPaging="True" 

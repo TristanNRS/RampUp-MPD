@@ -202,6 +202,21 @@ namespace DbAccess
             return sql;
         }
 
+        public string getSqlSearch(string searchText, List<string> cols, string tableName)
+        {
+            string sql = $"SELECT * FROM [dbo].[{tableName}] WHERE ";
+            int count = 1;
+            cols.ForEach((string colName) =>
+            {
+                if (count < cols.Count)
+                    sql += $"{colName} LIKE '%{searchText}%' OR ";
+                else if (count == cols.Count)
+                    sql += $"[{colName}] LIKE '%{searchText}%'";
+                count += 1;
+            });
+            return sql;
+        }
+
         public List<string> getListOfTables()
         {
             List<string> tableNames = new List<string>();

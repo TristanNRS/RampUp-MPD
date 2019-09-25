@@ -4,8 +4,9 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
     Insert values into:<br />
     <asp:DropDownList ID="tableList" runat="server" OnSelectedIndexChanged="tableList_SelectedIndexChanged" AutoPostBack="true" style="margin: 15px 0px"></asp:DropDownList> 
-    <asp:Button ID="addDataButton" runat="server"  CausesValidation="false"  Text="Add Data" style="margin: 15px 0px 15px 10px" OnClick="addDataButton_Click" />
-    <asp:GridView ID="GridView1" runat="server"
+    <asp:TextBox ID="searchBox" runat="server" OnTextChanged="searchBox_TextChanged" AutoPostBack="true" style="margin: 15px 0px 15px 10px"></asp:TextBox>
+    <asp:Button ID="addDataButton" runat="server"  CausesValidation="false"  Text="Add Data" style="margin: 15px 0px 15px 0px;" OnClick="addDataButton_Click" />
+    <asp:GridView ID="GridView1" runat="server" EnableViewState="false" GridLines="None"
         Style="margin-bottom:25px;"
         CellPadding="10" 
         AutoGenerateColumns="False" 
