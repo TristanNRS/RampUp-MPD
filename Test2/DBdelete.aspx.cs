@@ -17,22 +17,23 @@ namespace Test2
         private Db db = new Db();
         private string selectedTable;
         private bool isAuthorized;
+        private int rowToDelete = -1;
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            Auth auth = new Auth();
+            List<string> authorizedRoles = new List<string>() { "ADMIN" };
+            this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
+
             if (!IsPostBack)
             {
-                Auth auth = new Auth();
-                List<string> authorizedRoles = new List<string>() { "ADMIN" };
-                this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
-
                 if (this.isAuthorized)
                 {
                     authorizationPanel.Style.Add("display", "inline");
 
                     statusPanel.Style.Add("display", "none");
 
-                    searchBox.Style.Add("display", "none");
+                    searchPanel.Style.Add("display", "none");
 
                     tableList.Items.Add(new ListItem("----", "----"));
                     this.loadTablesInDropdown();
@@ -57,6 +58,9 @@ namespace Test2
                         string sql = (string)ViewState["isSearch"];
                         this.bindTable(sql);
                     }
+
+                    this.rowToDelete = ViewState["rowToDelete"] == null ? -1 : (int)ViewState["rowToDelete"];
+
                 }
             }
         }
@@ -84,7 +88,7 @@ namespace Test2
                 statusPanel.Style.Add("display", "none");
                 statusPanel.Controls.Clear();
 
-                searchBox.Style.Add("display", "inline");
+                searchPanel.Style.Add("display", "inline");
                 searchBox.Text = string.Empty;
 
                 GridView1.Style.Add("display", "inline");
@@ -93,7 +97,7 @@ namespace Test2
             }
             else
             {
-                searchBox.Style.Add("display", "none");
+                searchPanel.Style.Add("display", "none");
 
                 GridView1.Style.Add("display", "none");
                 this.selectedTable = null;
@@ -101,132 +105,188 @@ namespace Test2
             ViewState["selectedTable"] = this.selectedTable;
         }
 
-        private void bindTable(string sql = null)
+        protected void bindTable(string sql = null)
         {
-            GridView1.Columns.Clear();
-            try
+            if (this.selectedTable == null)
+                this.selectedTable = ViewState["selectedTable"].ToString();
+
+            if(this.selectedTable != null)
             {
-                SqlConnection conn = db.getConnection();
-
-                conn.Open();
-
-                List<string> colNames = db.getAllColumnNames(this.selectedTable, conn);
-                List<string> primaryKeys = db.getPrimaryKeys(this.selectedTable);
-                List<string> foreignKeys = db.getForeignKeys(this.selectedTable);
-
-                // set name of primary key
-                if (primaryKeys != null)
-                    GridView1.DataKeyNames = primaryKeys.ToArray();
-
-                if(sql == null)
-                    sql = $"SELECT * FROM [dbo].[{this.selectedTable}]";
-
-                SqlCommand cmd = db.getCommand(sql, conn);
-
-                SqlDataAdapter ad = new SqlDataAdapter(cmd);
-
-                DataTable dt = new DataTable();
-                ad.Fill(dt);
-
-                if (dt.Rows.Count > 0)
+                GridView1.Columns.Clear();
+                try
                 {
-                    BoundField Field;
-                    DataControlField Col;
-                    colNames.ForEach((colName) =>
+                    SqlConnection conn = db.getConnection();
+
+                    conn.Open();
+
+                    List<string> colNames = db.getAllColumnNames(this.selectedTable, conn);
+                    List<string> primaryKeys = db.getPrimaryKeys(this.selectedTable);
+                    List<string> foreignKeys = db.getForeignKeys(this.selectedTable);
+
+                    // set name of primary key
+                    if (primaryKeys != null)
+                        GridView1.DataKeyNames = primaryKeys.ToArray();
+
+                    if (sql == null)
+                        sql = $"SELECT * FROM [dbo].[{this.selectedTable}]";
+
+                    SqlCommand cmd = db.getCommand(sql, conn);
+
+                    SqlDataAdapter ad = new SqlDataAdapter(cmd);
+
+                    DataTable dt = new DataTable();
+                    ad.Fill(dt);
+
+                    if (dt.Rows.Count > 0)
                     {
-                        Field = new BoundField();
-                        Field.DataField = Field.HeaderText = colName;
+                        BoundField Field;
+                        DataControlField Col;
+                        colNames.ForEach((colName) =>
+                        {
+                            Field = new BoundField();
+                            Field.DataField = Field.HeaderText = colName;
 
-                        Col = Field;
-                        GridView1.Columns.Add(Col);
+                            Col = Field;
+                            GridView1.Columns.Add(Col);
 
-                    });
-                    GridView1.DataSource = dt;
+                        });
+                        GridView1.DataSource = dt;
 
-                    GridView1.DataBind();
-                } else
+                        GridView1.DataBind();
+                    }
+                    else
+                    {
+                        GridView1.DataSource = null;
+                    }
+
+                    conn.Close();
+                }
+                catch (Exception err)
                 {
-                    GridView1.DataSource = null;
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "Error";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl(err.Message));
                 }
 
-                conn.Close();
-            }
-            catch (Exception err)
+            } else
             {
                 statusPanel.Style.Add("display", "inline");
                 HtmlGenericControl h3 = new HtmlGenericControl("h3");
-                h3.InnerText = "Error";
+                h3.InnerText = "Selected table Error";
                 statusPanel.Controls.Add(h3);
-                statusPanel.Controls.Add(new LiteralControl(err.Message));
+                statusPanel.Controls.Add(new LiteralControl("Cannot find selected table"));
             }
-
         }
 
         protected void GridView1_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
-            // delete record
-            int numPrimaryKeys = GridView1.DataKeyNames.Length;
+            ViewState["rowToDelete"] = e.RowIndex;
+            ModalExtender.Show();
 
-            Dictionary<string, string> primaryKeys = new Dictionary<string, string>();
-
-            for (int i = 0; i < numPrimaryKeys; i += 1)
-            {
-                primaryKeys.Add(GridView1.DataKeyNames.GetValue(i).ToString(), GridView1.DataKeys[e.RowIndex].Values[i].ToString());
-            }
-
-            string sql = db.getSqlDelete(primaryKeys, this.selectedTable);
-            try
-            {
-                SqlConnection conn = db.getConnection();
-                conn.Open();
-                SqlCommand command = db.getCommand(sql, conn);
-                command.ExecuteNonQuery();
-                this.bindTable();
-            }
-            catch (Exception err)
-            {
-                statusPanel.Style.Add("display", "inline");
-                HtmlGenericControl h3 = new HtmlGenericControl("h3");
-                h3.InnerText = "DB Error";
-                statusPanel.Controls.Add(h3);
-                statusPanel.Controls.Add(new LiteralControl(err.Message));
-            }
+            string sql = (string)ViewState["isSearch"];
+            this.bindTable(sql);
         }
 
         protected void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             GridView1.PageIndex = e.NewPageIndex;
-            string sql = (string)ViewState["isSearch"];
-            this.bindTable(sql);
+            searchBox.Text = string.Empty;
+            this.bindTable();
         }
 
         protected void searchBox_TextChanged(object sender, EventArgs e)
         {
-            string searchText = searchBox.Text;
+            if (this.selectedTable == null)
+                this.selectedTable = ViewState["selectedTable"].ToString();
 
-            if (!searchText.Length.Equals(string.Empty))
+            if(this.selectedTable != null)
             {
-                List<string> cols = db.getEditableInsertableColumnNames(this.selectedTable);
-                string sql = db.getSqlSearch(searchText, cols, this.selectedTable);
-                this.bindTable(sql);
+                string searchText = searchBox.Text;
 
-                ViewState["isSearch"] = sql;
+                if (!searchText.Length.Equals(string.Empty))
+                {
+                    List<string> cols = db.getEditableInsertableColumnNames(this.selectedTable);
+                    string sql = db.getSqlSearch(searchText, cols, this.selectedTable);
+                    this.bindTable(sql);
 
-                if (GridView1.DataSource == null)
+                    ViewState["isSearch"] = sql;
+
+                    if (GridView1.DataSource == null)
+                    {
+                        ViewState["isSearch"] = null;
+                        statusPanel.Style.Add("display", "inline");
+                        HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                        h3.InnerText = "Search Status";
+                        statusPanel.Controls.Add(h3);
+                        statusPanel.Controls.Add(new LiteralControl($"No records to display for {searchText}"));
+                    }
+                }
+                else
                 {
                     ViewState["isSearch"] = null;
+                    this.bindTable();
+                }
+            } else
+            {
+                statusPanel.Style.Add("display", "inline");
+                HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                h3.InnerText = "Selected table Error";
+                statusPanel.Controls.Add(h3);
+                statusPanel.Controls.Add(new LiteralControl("Cannot find selected table"));
+            }
+        }
+
+        protected void cancelButton_Click(object sender, EventArgs e)
+        {
+            ModalExtender.Hide();
+            ViewState["rowToDelete"] = null;
+            string sql = (string)ViewState["isSearch"];
+            this.bindTable(sql);
+        }
+
+        protected void deleteButton_Click(object sender, EventArgs e)
+        {
+            if(this.rowToDelete != -1)
+            {
+                // delete record
+                int numPrimaryKeys = GridView1.DataKeyNames.Length;
+
+                Dictionary<string, string> primaryKeys = new Dictionary<string, string>();
+
+                for (int i = 0; i < numPrimaryKeys; i += 1)
+                {
+                    primaryKeys.Add(GridView1.DataKeyNames.GetValue(i).ToString(), GridView1.DataKeys[this.rowToDelete].Values[i].ToString());
+                }
+
+                string sql = db.getSqlDelete(primaryKeys, this.selectedTable);
+                try
+                {
+                    SqlConnection conn = db.getConnection();
+                    conn.Open();
+                    SqlCommand command = db.getCommand(sql, conn);
+                    command.ExecuteNonQuery();
+                    this.bindTable();
+                }
+                catch (Exception err)
+                {
                     statusPanel.Style.Add("display", "inline");
                     HtmlGenericControl h3 = new HtmlGenericControl("h3");
-                    h3.InnerText = "Search Status";
+                    h3.InnerText = "DB Error";
                     statusPanel.Controls.Add(h3);
-                    statusPanel.Controls.Add(new LiteralControl($"No records to display for {searchText}"));
+                    statusPanel.Controls.Add(new LiteralControl(err.Message));
                 }
+
             }
-            else
-            {
-                ViewState["isSearch"] = null;
-                this.bindTable();
-            }
+
+            ModalExtender.Hide();
+            ViewState["rowToDelete"] = null;
+        }
+
+        protected void searchIcon_Click(object sender, ImageClickEventArgs e)
+        {
+            searchBox_TextChanged(sender, e);
         }
     }
 }

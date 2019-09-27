@@ -31,6 +31,15 @@ namespace Test2 {
         protected global::System.Web.UI.WebControls.DropDownList tableList;
         
         /// <summary>
+        /// searchPanel control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel searchPanel;
+        
+        /// <summary>
         /// searchBox control.
         /// </summary>
         /// <remarks>
@@ -38,6 +47,15 @@ namespace Test2 {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox searchBox;
+        
+        /// <summary>
+        /// searchIcon control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.ImageButton searchIcon;
         
         /// <summary>
         /// GridView1 control.

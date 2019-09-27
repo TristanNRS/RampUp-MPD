@@ -19,11 +19,12 @@ namespace Test2
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            Auth auth = new Auth();
+            List<string> authorizedRoles = new List<string>() { "ADMIN" };
+            this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
+
             if (!IsPostBack)
             {
-                Auth auth = new Auth();
-                List<string> authorizedRoles = new List<string>() { "ADMIN" };
-                this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
 
                 if (this.isAuthorized)
                 {
@@ -32,7 +33,7 @@ namespace Test2
                     formPanel.Style.Add("display", "none");
                     statusPanel.Style.Add("display", "none");
                     addDataButton.Style.Add("display", "none");
-                    searchBox.Style.Add("display", "none");
+                    searchPanel.Style.Add("display", "none");
 
                     tableList.Items.Add(new ListItem("----", "----"));
                     this.loadTablesInDropdown();
@@ -87,7 +88,7 @@ namespace Test2
             {
                 this.selectedTable = tableList.SelectedItem.Value.ToString();
 
-                searchBox.Style.Add("display", "inline");
+                searchPanel.Style.Add("display", "inline");
                 searchBox.Text = string.Empty;
 
                 addDataButton.Style.Add("display", "block");
@@ -100,7 +101,7 @@ namespace Test2
             {
 
                 addDataButton.Style.Add("display", "none");
-                searchBox.Style.Add("display", "none");
+                searchPanel.Style.Add("display", "none");
 
                 GridView1.Style.Add("display", "none");
                 this.selectedTable = string.Empty;
@@ -108,71 +109,85 @@ namespace Test2
             ViewState["selectedTable"] = this.selectedTable;
         }
 
-
         private void bindTable(string sql = null)
         {
-            GridView1.Columns.Clear();
-            try
+            if (this.selectedTable == null)
+                this.selectedTable = ViewState["selectedTable"].ToString();
+
+            if (this.selectedTable != null)
             {
-                SqlConnection conn = db.getConnection();
-
-                conn.Open();
-
-                List<string> colNames = db.getEditableInsertableColumnNames(this.selectedTable, conn);
-
-                if(colNames != null)
+                GridView1.Columns.Clear();
+                try
                 {
-                    if(sql == null)
-                        sql = db.getSqlSelect(colNames, this.selectedTable);
+                    SqlConnection conn = db.getConnection();
 
-                    SqlCommand cmd = db.getCommand(sql, conn);
+                    conn.Open();
 
-                    SqlDataAdapter ad = new SqlDataAdapter(cmd);
+                    List<string> colNames = db.getEditableInsertableColumnNames(this.selectedTable, conn);
 
-                    DataTable dt = new DataTable();
-                    ad.Fill(dt);
-
-                    if (dt.Rows.Count > 0)
+                    if (colNames != null)
                     {
-                        BoundField Field;
-                        DataControlField Col;
-                        colNames.ForEach((colName) =>
+                        if (sql == null)
+                            sql = db.getSqlSelect(colNames, this.selectedTable);
+
+                        SqlCommand cmd = db.getCommand(sql, conn);
+
+                        SqlDataAdapter ad = new SqlDataAdapter(cmd);
+
+                        DataTable dt = new DataTable();
+                        ad.Fill(dt);
+
+                        if (dt.Rows.Count > 0)
                         {
-                            Field = new BoundField();
+                            BoundField Field;
+                            DataControlField Col;
+                            colNames.ForEach((colName) =>
+                            {
+                                Field = new BoundField();
 
-                            Field.DataField = Field.HeaderText = colName;
+                                Field.DataField = Field.HeaderText = colName;
 
-                            Col = Field;
+                                Col = Field;
 
-                            GridView1.Columns.Add(Col);
-                        });
-                        GridView1.DataSource = dt;
+                                GridView1.Columns.Add(Col);
+                            });
+                            GridView1.DataSource = dt;
 
-                        GridView1.DataBind();
-                    } else
-                    {
-                        GridView1.DataSource = null;
+                            GridView1.DataBind();
+                        }
+                        else
+                        {
+                            GridView1.DataSource = null;
+                        }
+
+                        conn.Close();
                     }
-
-                    conn.Close();
-                } else
+                    else
+                    {
+                        GridView1.Style.Add("display", "none");
+                        addDataButton.Style.Add("display", "none");
+                        statusPanel.Style.Add("display", "inline");
+                        HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                        h3.InnerText = "Table Error";
+                        statusPanel.Controls.Add(h3);
+                        statusPanel.Controls.Add(new LiteralControl($"No data to show for {this.selectedTable}"));
+                    }
+                }
+                catch (Exception err)
                 {
-                    GridView1.Style.Add("display", "none");
-                    addDataButton.Style.Add("display", "none");
                     statusPanel.Style.Add("display", "inline");
                     HtmlGenericControl h3 = new HtmlGenericControl("h3");
-                    h3.InnerText = "Table Error";
+                    h3.InnerText = "Bind Table Error";
                     statusPanel.Controls.Add(h3);
-                    statusPanel.Controls.Add(new LiteralControl($"No data to show for {this.selectedTable}"));
+                    statusPanel.Controls.Add(new LiteralControl(err.Message));
                 }
-            }
-            catch (Exception err)
+            } else
             {
                 statusPanel.Style.Add("display", "inline");
                 HtmlGenericControl h3 = new HtmlGenericControl("h3");
-                h3.InnerText = "Bind Table Error";
+                h3.InnerText = "Selected table Error";
                 statusPanel.Controls.Add(h3);
-                statusPanel.Controls.Add(new LiteralControl(err.Message));
+                statusPanel.Controls.Add(new LiteralControl("Cannot find selected table"));
             }
 
         }
@@ -180,7 +195,8 @@ namespace Test2
         protected void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
         {
             GridView1.PageIndex = e.NewPageIndex;
-            bindTable();
+            searchBox.Text = string.Empty;
+            this.bindTable();
         }
 
         protected void createInsertForm()
@@ -386,27 +402,45 @@ namespace Test2
 
         protected void searchBox_TextChanged(object sender, EventArgs e)
         {
-            string searchText = searchBox.Text;
+            if (this.selectedTable == null)
+                this.selectedTable = ViewState["selectedTable"].ToString();
 
-            if (!searchText.Length.Equals(string.Empty))
+            if (this.selectedTable != null)
             {
-                List<string> cols = db.getEditableInsertableColumnNames(this.selectedTable);
-                string sql = db.getSqlSearch(searchText, cols, this.selectedTable);
-                this.bindTable(sql);
+                string searchText = searchBox.Text;
 
-                if (GridView1.DataSource == null)
+                if (!searchText.Length.Equals(string.Empty))
                 {
-                    statusPanel.Style.Add("display", "inline");
-                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
-                    h3.InnerText = "Search Status";
-                    statusPanel.Controls.Add(h3);
-                    statusPanel.Controls.Add(new LiteralControl($"No records to display for {searchText}"));
+                    List<string> cols = db.getEditableInsertableColumnNames(this.selectedTable);
+                    string sql = db.getSqlSearch(searchText, cols, this.selectedTable);
+                    this.bindTable(sql);
+
+                    if (GridView1.DataSource == null)
+                    {
+                        statusPanel.Style.Add("display", "inline");
+                        HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                        h3.InnerText = "Search Status";
+                        statusPanel.Controls.Add(h3);
+                        statusPanel.Controls.Add(new LiteralControl($"No records to display for {searchText}"));
+                    }
                 }
-            }
-            else
+                else
+                {
+                    this.bindTable();
+                }
+            } else
             {
-                this.bindTable();
+                statusPanel.Style.Add("display", "inline");
+                HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                h3.InnerText = "Selected table Error";
+                statusPanel.Controls.Add(h3);
+                statusPanel.Controls.Add(new LiteralControl("Cannot find selected table"));
             }
+        }
+
+        protected void searchIcon_Click(object sender, ImageClickEventArgs e)
+        {
+            searchBox_TextChanged(sender, e);
         }
     }
 }

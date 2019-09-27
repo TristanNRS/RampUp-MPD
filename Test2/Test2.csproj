@@ -103,9 +103,10 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AboutUs.aspx" />
+    <Content Include="images\baseline_search_black_18dp.png" />
+    <Content Include="MPDTable.aspx" />
     <Content Include="DBdelete.aspx" />
     <Content Include="DBinsert.aspx" />
-    <Content Include="Dbsearch.aspx" />
     <Content Include="DBupdate.aspx" />
     <Content Include="DBviewData.aspx" />
     <Content Include="packages.config" />
@@ -119,6 +120,7 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+    <Content Include="Web.sitemap" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="scripts\ai.0.22.9-build00167.js" />
@@ -138,6 +140,13 @@
     <Compile Include="AboutUs.aspx.designer.cs">
       <DependentUpon>AboutUs.aspx</DependentUpon>
     </Compile>
+    <Compile Include="MPDTable.aspx.cs">
+      <DependentUpon>MPDTable.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="MPDTable.aspx.designer.cs">
+      <DependentUpon>MPDTable.aspx</DependentUpon>
+    </Compile>
     <Compile Include="DBdelete.aspx.cs">
       <DependentUpon>DBdelete.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -151,13 +160,6 @@
     </Compile>
     <Compile Include="DBinsert.aspx.designer.cs">
       <DependentUpon>DBinsert.aspx</DependentUpon>
-    </Compile>
-    <Compile Include="Dbsearch.aspx.cs">
-      <DependentUpon>Dbsearch.aspx</DependentUpon>
-      <SubType>ASPXCodeBehind</SubType>
-    </Compile>
-    <Compile Include="Dbsearch.aspx.designer.cs">
-      <DependentUpon>Dbsearch.aspx</DependentUpon>
     </Compile>
     <Compile Include="DBupdate.aspx.cs">
       <DependentUpon>DBupdate.aspx</DependentUpon>
@@ -206,6 +208,7 @@
       <Name>DbAccess</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

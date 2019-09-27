@@ -10,7 +10,7 @@
 namespace Test2 {
     
     
-    public partial class DBdelete {
+    public partial class MPDTable {
         
         /// <summary>
         /// authorizationPanel control.

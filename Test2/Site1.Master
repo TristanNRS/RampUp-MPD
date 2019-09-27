@@ -8,60 +8,56 @@
 <head runat="server">
     <title>Ministry of Planning Demo Project</title>
     <link href="Styles.css" rel="stylesheet" type="text/css"/>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"/>
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <asp:ContentPlaceHolder ID="head" runat="server">
     </asp:ContentPlaceHolder>
 </head>
-<body>
+<body>   
     <form id="form1" runat="server">
-        <div>
-            <div style="margin-top:25px; margin-bottom:15px; position:relative">
-                <h1 style="display:inline">Ministry of Planning</h1>
-                <table style="width:200px;position:absolute; top:0px; right: 140px; display:inline">
-                    <tr>
-                        <td>
-                            <asp:TextBox ID="authResult" runat="server" Height="16px" Width="110px" BorderStyle="None" style="display:inline; margin-right:10px;"></asp:TextBox> 
-                        </td>
-                    </tr>
-                </table>
-                
+        <nav id="nav" class="navbar navbar-expand-lg navbar-light mr-5 ml-5" style="background-color: #e3f2fd;">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <a class="navbar-brand" href="Default.aspx">Ministry of Planning</a>
+                <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+                    <li class="nav-item">
+                        <a class="nav-link" href="Default.aspx">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="AboutUs.aspx">About Us</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Database Exercises
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <a class="dropdown-item" href="DBviewData.aspx">View Data</a>
+                            <a class="dropdown-item" href="DBinsert.aspx">Insert</a>
+                            <a class="dropdown-item" href="DBupdate.aspx">Update</a>
+                            <a class="dropdown-item" href="DBdelete.aspx">Delete</a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="MPDTable.aspx">Data Table</a>
+                        </div>
+                    </li>
+                </ul>
             </div>
-            <div style="margin-bottom:25px;">
-                <asp:Menu ID="Menu1" runat="server" Height="35px" Width="40%" Orientation="Horizontal">
-                    <staticmenuitemstyle 
-                      VerticalPadding="5px"
-                      HorizontalPadding="25px"
-                      forecolor="Black"
-                      borderstyle="Solid"
-                      borderwidth="1"
-                      bordercolor="Black" 
-                        backcolor="LightBlue"/>
-
-                    <dynamicmenuitemstyle 
-                      VerticalPadding="5px"
-                      HorizontalPadding="25px"
-                      backcolor="LightBlue"
-                      borderstyle="Solid"
-                      borderwidth="1"
-                      bordercolor="Black" 
-                      forecolor="Black"
-                        />
-                    <Items>
-                        <asp:MenuItem NavigateUrl="Default.aspx" Text="Home" Value="Home"></asp:MenuItem>
-                        <asp:MenuItem Text="About Us" NavigateUrl="AboutUs.aspx" Value="About Us"></asp:MenuItem>
-                        <asp:MenuItem Text="Database Exercises" Value="Database Exercises">
-                            <asp:MenuItem NavigateUrl="DBviewData.aspx" Text="View Data" Value="View Data"></asp:MenuItem>
-                            <asp:MenuItem Text="Insert" Value="Insert" NavigateUrl="DBinsert.aspx"></asp:MenuItem>
-                            <asp:MenuItem Text="Update" Value="Update" NavigateUrl="DBupdate.aspx"></asp:MenuItem>
-                            <asp:MenuItem Text="Delete" Value="Delete" NavigateUrl="DBdelete.aspx"></asp:MenuItem>
-                            <asp:MenuItem Text="Search" Value="Search" NavigateUrl="DBsearch.aspx"></asp:MenuItem>
-                        </asp:MenuItem>
-                    </Items>
-                </asp:Menu>
-            </div>
-            <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server">
-        
-            </asp:ContentPlaceHolder>
+            <span class="navbar-text">
+                <asp:Literal ID="authResult" runat="server"></asp:Literal>
+            </span>
+        </nav>
+        <div class="container-fluid mt-3 mr-5 ml-5" id="body">
+                <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server"></asp:ContentPlaceHolder>
         </div>
+
+        <footer class="card-footer fixed-bottom mr-5 ml-5">
+            <div class="container-fluid">
+                Copyright © 2019, Ministry of Planning and Development. All Rights Reserved.
+            </div>
+        </footer>
     </form>
 </body>
 </html>

@@ -12,7 +12,7 @@ namespace Test2
             string username;
             if ((username = auth.getUsername()) != null)
             {
-                authResult.Text =  username;
+                authResult.Text = username;
             }
             else
             {

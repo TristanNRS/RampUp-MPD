@@ -3,7 +3,6 @@ using DbAccess;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -14,12 +13,12 @@ using System.Web.UI.WebControls;
 
 namespace Test2
 {
-    public partial class DBupdate : System.Web.UI.Page
+    public partial class MPDTable : System.Web.UI.Page
     {
-
         private Db db = new Db();
         private string selectedTable;
         private bool isAuthorized;
+        private int rowToDelete = -1;
 
         protected void Page_Load(object sender, EventArgs e)
         {
@@ -29,17 +28,18 @@ namespace Test2
 
             if (!IsPostBack)
             {
-
                 if (this.isAuthorized)
                 {
                     authorizationPanel.Style.Add("display", "inline");
 
                     statusPanel.Style.Add("display", "none");
+
                     searchPanel.Style.Add("display", "none");
 
                     tableList.Items.Add(new ListItem("----", "----"));
                     this.loadTablesInDropdown();
-                } else
+                }
+                else
                 {
                     authorizationPanel.Style.Add("display", "none");
 
@@ -52,7 +52,6 @@ namespace Test2
             }
             else
             {
-
                 if (this.isAuthorized)
                 {
                     this.selectedTable = (string)ViewState["selectedTable"];
@@ -61,6 +60,9 @@ namespace Test2
                         string sql = (string)ViewState["isSearch"];
                         this.bindTable(sql);
                     }
+
+                    this.rowToDelete = ViewState["rowToDelete"] == null ? -1 : (int)ViewState["rowToDelete"];
+
                 }
             }
         }
@@ -105,104 +107,7 @@ namespace Test2
             ViewState["selectedTable"] = this.selectedTable;
         }
 
-        protected void GridView1_RowEditing(object sender, GridViewEditEventArgs e)
-        {
-            GridView1.EditIndex = e.NewEditIndex;
-            string sql = (string)ViewState["isSearch"];
-            this.bindTable(sql);
-        }
-
-        protected void GridView1_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
-        {
-            GridView1.EditIndex = -1;
-            string sql = (string)ViewState["isSearch"];
-            this.bindTable(sql);
-        }
-
-        protected bool isValidated(GridViewUpdateEventArgs e)
-        {
-            Dictionary<string, Dictionary<string, string>> data = db.getTableMetadata(this.selectedTable);
-            IEnumerator keyIterator = e.NewValues.Keys.GetEnumerator();
-            IEnumerator valIterator = e.NewValues.Values.GetEnumerator();
-            while (keyIterator.MoveNext() && valIterator.MoveNext())
-            {
-                string key = keyIterator.Current.ToString();
-
-                var nextVal = valIterator.Current;
-                string valToValidate= nextVal != null ? nextVal.ToString() : string.Empty;
-
-                string validationResult = db.validateInput(valToValidate, key, data[key]);
-                if (!validationResult.Equals("Success"))
-                {
-                    statusPanel.Style.Add("display", "inline");
-                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
-                    h3.InnerText = "Validation Error";
-                    statusPanel.Controls.Add(h3);
-                    statusPanel.Controls.Add(new LiteralControl($"In column '{key}': {validationResult}"));
-                    return false;
-                }
-                    
-            }
-            return true;
-        }
-
-        protected void GridView1_RowUpdating(object sender, GridViewUpdateEventArgs e)
-        {
-
-            if(e.NewValues.Count > 0 && isValidated(e))
-            {
-                int numPrimaryKeys = GridView1.DataKeyNames.Length;
-
-                Dictionary<string, string> primaryKeys = new Dictionary<string, string>();
-
-                for (int i = 0; i < numPrimaryKeys; i += 1)
-                {
-                    primaryKeys.Add(GridView1.DataKeyNames.GetValue(i).ToString(), GridView1.DataKeys[e.RowIndex].Values[i].ToString());
-                }
-
-                IEnumerator iterator = e.NewValues.Keys.GetEnumerator();
-                IEnumerator iterator2 = e.NewValues.Values.GetEnumerator();
-                List<string> keys = new List<string>();
-                List<string> newValues = new List<string>();
-                
-                while (iterator.MoveNext() && iterator2.MoveNext())
-                {
-                    keys.Add(iterator.Current.ToString());
-                    var nextVal = iterator2.Current;
-                    string valToAdd = nextVal != null ? nextVal.ToString() : string.Empty;
-                    newValues.Add(valToAdd);
-                }
-            
-                string sql = db.getSqlUpdate(keys, newValues, primaryKeys, this.selectedTable);
-                try
-                {
-                    SqlConnection conn = db.getConnection();
-                    conn.Open();
-                    SqlCommand command = db.getCommand(sql, conn);
-                    command.ExecuteNonQuery();
-                    GridView1.EditIndex = -1;
-                    string sqlSearch = (string)ViewState["isSearch"];
-                    this.bindTable(sqlSearch);
-                }
-                catch (Exception err)
-                {
-                    statusPanel.Style.Add("display", "inline");
-                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
-                    h3.InnerText = "DB Error";
-                    statusPanel.Controls.Add(h3);
-                    statusPanel.Controls.Add(new LiteralControl(err.Message));
-                }
-            }
-        }
-
-        protected void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
-        {
-            GridView1.PageIndex = e.NewPageIndex;
-            searchBox.Text = string.Empty;
-            this.bindTable();
-        }
-
-        private void bindTable(string sql = null)
+        protected void bindTable(string sql = null)
         {
             if (this.selectedTable == null)
                 this.selectedTable = ViewState["selectedTable"].ToString();
@@ -250,7 +155,6 @@ namespace Test2
                             }
                             else
                                 Field.Visible = true;
-
                             Field.DataField = Field.HeaderText = colName;
 
                             Col = Field;
@@ -276,7 +180,9 @@ namespace Test2
                     statusPanel.Controls.Add(h3);
                     statusPanel.Controls.Add(new LiteralControl(err.Message));
                 }
-            } else
+
+            }
+            else
             {
                 statusPanel.Style.Add("display", "inline");
                 HtmlGenericControl h3 = new HtmlGenericControl("h3");
@@ -286,13 +192,20 @@ namespace Test2
             }
         }
 
-        protected void GridView1_RowUpdated(object sender, GridViewUpdatedEventArgs e)
+        protected void GridView1_RowDeleting(object sender, GridViewDeleteEventArgs e)
         {
-            statusPanel.Style.Add("display", "inline");
-            HtmlGenericControl h3 = new HtmlGenericControl("h3");
-            h3.InnerText = "Success";
-            statusPanel.Controls.Add(h3);
-            statusPanel.Controls.Add(new LiteralControl($"Record successfully updated"));
+            ViewState["rowToDelete"] = e.RowIndex;
+            ModalExtender.Show();
+
+            string sql = (string)ViewState["isSearch"];
+            this.bindTable(sql);
+        }
+
+        protected void GridView1_PageIndexChanging(object sender, GridViewPageEventArgs e)
+        {
+            GridView1.PageIndex = e.NewPageIndex;
+            searchBox.Text = string.Empty;
+            this.bindTable();
         }
 
         protected void searchBox_TextChanged(object sender, EventArgs e)
@@ -327,7 +240,8 @@ namespace Test2
                     ViewState["isSearch"] = null;
                     this.bindTable();
                 }
-            } else
+            }
+            else
             {
                 statusPanel.Style.Add("display", "inline");
                 HtmlGenericControl h3 = new HtmlGenericControl("h3");
@@ -336,9 +250,155 @@ namespace Test2
                 statusPanel.Controls.Add(new LiteralControl("Cannot find selected table"));
             }
         }
+
         protected void searchIcon_Click(object sender, ImageClickEventArgs e)
         {
             searchBox_TextChanged(sender, e);
+        }
+
+        protected void cancelButton_Click(object sender, EventArgs e)
+        {
+            ModalExtender.Hide();
+            ViewState["rowToDelete"] = null;
+            string sql = (string)ViewState["isSearch"];
+            this.bindTable(sql);
+        }
+
+        protected void deleteButton_Click(object sender, EventArgs e)
+        {
+            if (this.rowToDelete != -1)
+            {
+                // delete record
+                int numPrimaryKeys = GridView1.DataKeyNames.Length;
+
+                Dictionary<string, string> primaryKeys = new Dictionary<string, string>();
+
+                for (int i = 0; i < numPrimaryKeys; i += 1)
+                {
+                    primaryKeys.Add(GridView1.DataKeyNames.GetValue(i).ToString(), GridView1.DataKeys[this.rowToDelete].Values[i].ToString());
+                }
+
+                string sql = db.getSqlDelete(primaryKeys, this.selectedTable);
+                try
+                {
+                    SqlConnection conn = db.getConnection();
+                    conn.Open();
+                    SqlCommand command = db.getCommand(sql, conn);
+                    command.ExecuteNonQuery();
+                    this.bindTable();
+                }
+                catch (Exception err)
+                {
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "DB Error";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl(err.Message));
+                }
+
+            }
+
+            ModalExtender.Hide();
+            ViewState["rowToDelete"] = null;
+        }
+
+        protected void GridView1_RowEditing(object sender, GridViewEditEventArgs e)
+        {
+            GridView1.EditIndex = e.NewEditIndex;
+            string sql = (string)ViewState["isSearch"];
+            this.bindTable(sql);
+        }
+
+        protected void GridView1_RowCancelingEdit(object sender, GridViewCancelEditEventArgs e)
+        {
+            GridView1.EditIndex = -1;
+            string sql = (string)ViewState["isSearch"];
+            this.bindTable(sql);
+        }
+
+        protected bool isValidated(GridViewUpdateEventArgs e)
+        {
+            Dictionary<string, Dictionary<string, string>> data = db.getTableMetadata(this.selectedTable);
+            IEnumerator keyIterator = e.NewValues.Keys.GetEnumerator();
+            IEnumerator valIterator = e.NewValues.Values.GetEnumerator();
+            while (keyIterator.MoveNext() && valIterator.MoveNext())
+            {
+                string key = keyIterator.Current.ToString();
+
+                var nextVal = valIterator.Current;
+                string valToValidate = nextVal != null ? nextVal.ToString() : string.Empty;
+
+                string validationResult = db.validateInput(valToValidate, key, data[key]);
+                if (!validationResult.Equals("Success"))
+                {
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "Validation Error";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl($"In column '{key}': {validationResult}"));
+                    return false;
+                }
+
+            }
+            return true;
+        }
+
+        protected void GridView1_RowUpdating(object sender, GridViewUpdateEventArgs e)
+        {
+
+            if (e.NewValues.Count > 0 && isValidated(e))
+            {
+                int numPrimaryKeys = GridView1.DataKeyNames.Length;
+
+                Dictionary<string, string> primaryKeys = new Dictionary<string, string>();
+
+                for (int i = 0; i < numPrimaryKeys; i += 1)
+                {
+                    primaryKeys.Add(GridView1.DataKeyNames.GetValue(i).ToString(), GridView1.DataKeys[e.RowIndex].Values[i].ToString());
+                }
+
+                IEnumerator iterator = e.NewValues.Keys.GetEnumerator();
+                IEnumerator iterator2 = e.NewValues.Values.GetEnumerator();
+                List<string> keys = new List<string>();
+                List<string> newValues = new List<string>();
+
+                while (iterator.MoveNext() && iterator2.MoveNext())
+                {
+                    keys.Add(iterator.Current.ToString());
+                    var nextVal = iterator2.Current;
+                    string valToAdd = nextVal != null ? nextVal.ToString() : string.Empty;
+                    newValues.Add(valToAdd);
+                }
+
+                string sql = db.getSqlUpdate(keys, newValues, primaryKeys, this.selectedTable);
+                try
+                {
+                    SqlConnection conn = db.getConnection();
+                    conn.Open();
+                    SqlCommand command = db.getCommand(sql, conn);
+                    command.ExecuteNonQuery();
+                    GridView1.EditIndex = -1;
+                    string sqlSearch = (string)ViewState["isSearch"];
+                    this.bindTable(sqlSearch);
+                }
+                catch (Exception err)
+                {
+                    statusPanel.Style.Add("display", "inline");
+                    HtmlGenericControl h3 = new HtmlGenericControl("h3");
+                    h3.InnerText = "DB Error";
+                    statusPanel.Controls.Add(h3);
+                    statusPanel.Controls.Add(new LiteralControl(err.Message));
+                }
+            }
+        }
+
+        protected void GridView1_RowUpdated(object sender, GridViewUpdatedEventArgs e)
+        {
+            statusPanel.Style.Add("display", "inline");
+            HtmlGenericControl h3 = new HtmlGenericControl("h3");
+            h3.InnerText = "Success";
+            statusPanel.Controls.Add(h3);
+            statusPanel.Controls.Add(new LiteralControl($"Record successfully updated"));
         }
     }
 }

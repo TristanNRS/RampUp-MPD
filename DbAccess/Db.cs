@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Data.SqlClient;
 using System.Text.RegularExpressions;
-using System.Collections;
+
+
+// TODO: FIX REGEX for updating dates to include acceptance of times
+// TODO: FIX REGEX for validations
+
 
 namespace DbAccess
 {
