@@ -2,5 +2,7 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
-    We are the Ministry of Planning and Development    
+    <div class="d-flex flex-row justify-content-center mt-4">
+        <asp:Image ID="Image1" runat="server" ImageUrl="~/images/ministry_logo.jpg"/>
+    </div>  
 </asp:Content>

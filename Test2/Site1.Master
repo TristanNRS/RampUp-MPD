@@ -17,12 +17,12 @@
 </head>
 <body>   
     <form id="form1" runat="server">
-        <nav id="nav" class="navbar navbar-expand-lg navbar-light mr-5 ml-5" style="background-color: #e3f2fd;">
+        <nav id="nav" class="navbar navbar-expand-lg navbar-light" style="background-color: #A8DADC;">
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarCollapse">
-                <a class="navbar-brand" href="Default.aspx">Ministry of Planning</a>
+                <%--<a class="navbar-brand" href="Default.aspx">Ministry of Planning</a>--%>
                 <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
                     <li class="nav-item">
                         <a class="nav-link" href="Default.aspx">Home</a>
@@ -49,12 +49,12 @@
                 <asp:Literal ID="authResult" runat="server"></asp:Literal>
             </span>
         </nav>
-        <div class="container-fluid mt-3 mr-5 ml-5" id="body">
-                <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server"></asp:ContentPlaceHolder>
+        <div class="container-fluid" id="contentBody">
+            <asp:ContentPlaceHolder ID="ContentPlaceHolder1" runat="server"></asp:ContentPlaceHolder>
         </div>
 
-        <footer class="card-footer fixed-bottom mr-5 ml-5">
-            <div class="container-fluid">
+        <footer class="card-footer fixed-bottom" style="background-color:#A8DADC">
+            <div class="footer-copyright text-center">
                 Copyright © 2019, Ministry of Planning and Development. All Rights Reserved.
             </div>
         </footer>

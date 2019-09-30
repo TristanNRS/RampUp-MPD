@@ -104,6 +104,12 @@
   <ItemGroup>
     <Content Include="AboutUs.aspx" />
     <Content Include="images\baseline_search_black_18dp.png" />
+    <Content Include="images\ministry_logo.jpg" />
+    <Content Include="images\MPDminister.jpg" />
+    <Content Include="images\Paula_Mae_Weekes.jpg" />
+    <Content Include="images\posQPS.jpg" />
+    <Content Include="images\PS_Deoraj.jpg" />
+    <Content Include="images\v2030.png" />
     <Content Include="MPDTable.aspx" />
     <Content Include="DBdelete.aspx" />
     <Content Include="DBinsert.aspx" />

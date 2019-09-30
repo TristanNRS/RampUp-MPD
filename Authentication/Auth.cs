@@ -44,7 +44,9 @@ namespace Authentication
 
         public bool isAuthorized(string role, List<string> authorizationNeeded)
         {
-            return authorizationNeeded.Contains(role);
+            if(role != null || role != string.Empty)
+                return authorizationNeeded.Contains(role);
+            return false;
         }
 
 
