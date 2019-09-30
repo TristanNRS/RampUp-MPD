@@ -120,18 +120,21 @@ namespace Test2
                     if (dt.Rows.Count > 0)
                     {
                         List<string> colNames = db.getAllColumnNames(this.selectedTable, conn);
+                        List<string> headerNames = db.getFormattedColNames(colNames);
                         BoundField Field;
                         DataControlField Col;
-                        colNames.ForEach((colName) =>
+                        for(int i = 0; i < colNames.Count; i += 1)
                         {
                             Field = new BoundField();
 
-                            Field.DataField = Field.HeaderText = colName;
+                            Field.DataField = colNames[i];
+                            Field.HeaderText = headerNames[i];
 
                             Col = Field;
 
                             GridView1.Columns.Add(Col);
-                        });
+                        }
+                       
                         GridView1.DataSource = dt;
 
                         GridView1.DataBind();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Data.SqlClient;
 using System.Text.RegularExpressions;
+using System.Configuration;
 
 
 // TODO: FIX REGEX for updating dates to include acceptance of times
@@ -410,10 +411,46 @@ namespace DbAccess
             }
         }
 
+        protected string formatColName(string colName)
+        {
+            string[] arr;
+            string formattedValue;
+            if (colName.Contains("_"))
+            {
+                arr = colName.Split('_');
+
+                for(int i = 0; i < arr.Length; i += 1)
+                {
+                    arr[i] = arr[i].Insert(0,arr[i].ElementAt(0).ToString().ToUpper());
+                    arr[i] = arr[i].Remove(1, 1);
+                }
+
+                formattedValue = string.Join(" ", arr);
+            } else
+            {
+                formattedValue = colName.Insert(0, colName.ElementAt(0).ToString().ToUpper());
+                formattedValue = formattedValue.Remove(1, 1);
+            }
+
+            return formattedValue;
+        }
+
+        public List<string> getFormattedColNames(List<string> colNames)
+        {
+            List<string> formattedNames = new List<string>();
+            colNames.ForEach((colName) =>
+            {
+                formattedNames.Add(formatColName(colName));
+            });
+
+            return formattedNames;
+        }
+
         public List<string> getAllColumnNames(string table = null, SqlConnection cnn = null, Dictionary<string, Dictionary<string, string>> data = null)
         {
             if (data == null)
                 data = this.getTableMetadata(table, cnn);
+
             return new List<string>(data.Keys);
         }
 
@@ -435,7 +472,7 @@ namespace DbAccess
 
         public SqlConnection getConnection()
         {
-            string connectionString = @"Data Source=DESKTOP-HN7F6PM\SQLEXPRESS1;Initial Catalog=Test;Integrated Security=True";
+            string connectionString = ConfigurationManager.ConnectionStrings["myConnectionString"].ConnectionString;
             return new SqlConnection(connectionString);
         }
 

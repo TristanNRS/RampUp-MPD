@@ -141,26 +141,32 @@ namespace Test2
 
                     if (dt.Rows.Count > 0)
                     {
+                        List<string> headerNames = db.getFormattedColNames(colNames);
                         BoundField Field;
                         DataControlField Col;
-                        colNames.ForEach((colName) =>
+                        for (int i = 0; i < colNames.Count; i += 1)
                         {
                             Field = new BoundField();
-                            if (primaryKeys != null && primaryKeys.Contains(colName))
+
+                            if (primaryKeys != null && primaryKeys.Contains(colNames[i]))
                             {
                                 Field.Visible = false;
-                                if (foreignKeys != null && foreignKeys.Contains(colName))
+                                if (foreignKeys != null && foreignKeys.Contains(colNames[i]))
                                     Field.Visible = true;
 
                             }
                             else
                                 Field.Visible = true;
-                            Field.DataField = Field.HeaderText = colName;
+
+
+                            Field.DataField = colNames[i];
+                            Field.HeaderText = headerNames[i];
 
                             Col = Field;
-                            GridView1.Columns.Add(Col);
 
-                        });
+                            GridView1.Columns.Add(Col);
+                        }
+
                         GridView1.DataSource = dt;
 
                         GridView1.DataBind();

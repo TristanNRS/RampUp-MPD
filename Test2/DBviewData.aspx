@@ -4,6 +4,11 @@
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server" >
     <asp:Panel ID="authorizationPanel" runat="server">
         <div class="row mt-5">
+            <div class="col">
+                <h4>View Data</h4>
+            </div>
+        </div>
+        <div class="row mt-4">
             <div class="col" style="position:relative;">
                 <asp:DropDownList ID="tableList" runat="server" OnSelectedIndexChanged="tableList_SelectedIndexChanged" AutoPostBack="true" style="display:inline; position:absolute; top:0px; left: 15px;" Height="27px"></asp:DropDownList>
                 <asp:Panel ID="searchPanel" runat="server">
