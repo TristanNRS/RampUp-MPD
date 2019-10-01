@@ -104,10 +104,14 @@
   <ItemGroup>
     <Content Include="AboutUs.aspx" />
     <Content Include="images\baseline_search_black_18dp.png" />
+    <Content Include="images\caricomForumOnSustainableDev.jpg" />
+    <Content Include="images\greenleafAwards.jpg" />
+    <Content Include="images\iCare.jpg" />
     <Content Include="images\ministry_logo.jpg" />
     <Content Include="images\MPDminister.jpg" />
     <Content Include="images\Paula_Mae_Weekes.jpg" />
     <Content Include="images\posQPS.jpg" />
+    <Content Include="images\presentationScarletIbis.jpg" />
     <Content Include="images\PS_Deoraj.jpg" />
     <Content Include="images\v2030.png" />
     <Content Include="MPDTable.aspx" />
@@ -126,6 +130,8 @@
     <None Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
+    <Content Include="videos\100 volunteers for 1000 mangroves.mp4" />
+    <Content Include="videos\Our Scarlet Ibis an Environmentally Sensitive Species.mp4" />
     <Content Include="Web.sitemap" />
   </ItemGroup>
   <ItemGroup>
