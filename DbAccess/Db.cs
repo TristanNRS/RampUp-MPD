@@ -21,6 +21,8 @@ namespace DbAccess
              * */
             if(input.Length > 0)
             {
+                if (input.Contains("'") || input.Contains("`") || input.Contains("\""))
+                    return "No single quotes, double quotes or back ticks allowed";
                 string type = this.mapDbTypeToInputType(metadata["dataType"], colName);
                 string pattern;
                 switch (type)
@@ -155,6 +157,7 @@ namespace DbAccess
             });
             sql += "VALUES (";
             count = 1;
+
             values.ForEach((string value) =>
             {
                 if (count < values.Count)

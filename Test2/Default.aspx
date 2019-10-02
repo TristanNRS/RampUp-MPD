@@ -174,7 +174,7 @@
     </div>
 
     <%--VIP Cards --%>
-    <div class="d-flex flex-row justify-content-center align-items-center text-center" style="height:450px;">
+    <div class="d-flex flex-row justify-content-center align-items-center text-center mb-5" style="height:450px;">
         <div class="col">
             <div class="card bg-light">
                 <img class="card-img-top mx-auto d-block mt-3" src="images/Paula_Mae_Weekes.jpg" alt="Honourable Minister" style="width:200px; height:150px"/>

@@ -359,6 +359,21 @@ namespace Test2
 
         }
 
+        private bool isValidated(List<string> values)
+        {
+            bool areValuesValidated = true;
+            values.ForEach((string value) =>
+            {
+                // check for single quote
+                if (value.Contains("'") || value.Contains("`") || value.Contains("\""))
+                    areValuesValidated = false;
+            });
+
+            if (!areValuesValidated)
+                return false;
+            return true;
+        }
+
         private void SubmitButton_Click(object sender, EventArgs e)
         {
             // submit form data to DB
@@ -367,18 +382,22 @@ namespace Test2
                 SqlConnection conn = db.getConnection();
                 conn.Open();
                 List<string> values = this.getInsertValues(formTable);
-                List<string> cols = db.getEditableInsertableColumnNames(this.selectedTable, conn);
-                string sql = db.getSqlInsert(cols, values, this.selectedTable);
-                SqlCommand command = db.getCommand(sql, conn);
-                int rowsAffected = command.ExecuteNonQuery();
-                db.closeOff(conn, command);
-                this.bindTable();
+                if (this.isValidated(values))
+                {
+                    List<string> cols = db.getEditableInsertableColumnNames(this.selectedTable, conn);
+                    string sql = db.getSqlInsert(cols, values, this.selectedTable);
+                    SqlCommand command = db.getCommand(sql, conn);
+                    int rowsAffected = command.ExecuteNonQuery();
+                    db.closeOff(conn, command);
+                    this.bindTable();
+                } else
+                    throw new Exception("No single quotes, double quotes or back ticks allowed");
             }
             catch (Exception err)
             {
                 statusPanel.Style.Add("display", "inline");
                 HtmlGenericControl h3 = new HtmlGenericControl("h3");
-                h3.InnerText = "DB Error";
+                h3.InnerText = "Error";
                 statusPanel.Controls.Add(h3);
                 statusPanel.Controls.Add(new LiteralControl(err.Message));
 
