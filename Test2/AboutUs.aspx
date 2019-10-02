@@ -5,6 +5,8 @@
     <div class="d-flex flex-row justify-content-center mt-4">
         <asp:Image ID="Image1" runat="server" ImageUrl="~/images/ministry_logo.jpg" Height="150px" Width="250px"/>
     </div>  
+
+    <%--Info about the ministry in the form of cards answering some main question--%> 
     <div class="card-deck mt-5">
         <div class="card">
             <div class="card-body">

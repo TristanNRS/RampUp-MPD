@@ -10,6 +10,8 @@ namespace Test2
         {
             Auth auth = new Auth();
             string username;
+
+            // set signed in user name
             if ((username = auth.getUsername()) != null)
             {
                 authResult.Text = username;
@@ -22,10 +24,5 @@ namespace Test2
 
         }
 
-        protected void logout_Click(object sender, EventArgs e)
-        {
-            System.Web.Security.FormsAuthentication.SignOut();
-            Response.Redirect("Login.aspx", true);
-        }
     }
 }

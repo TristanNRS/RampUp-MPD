@@ -2,12 +2,16 @@
 <asp:Content ID="Content1" ContentPlaceHolderID="head" runat="server">
 </asp:Content>
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server" >
+
+    <%--This panel is used to only show the page to authorized users (based on their role as defined in the Users table in DB)--%>
     <asp:Panel ID="authorizationPanel" runat="server">
         <div class="row mt-5">
             <div class="col">
                 <h4>View Data</h4>
             </div>
         </div>
+
+        <%--Dropdown list and search bar--%>
         <div class="row mt-4">
             <div class="col" style="position:relative;">
                 <asp:DropDownList ID="tableList" runat="server" OnSelectedIndexChanged="tableList_SelectedIndexChanged" AutoPostBack="true" style="display:inline; position:absolute; top:0px; left: 15px;" Height="27px"></asp:DropDownList>
@@ -17,6 +21,8 @@
                 </asp:Panel>
             </div>
         </div>
+
+        <%--GridView Data table--%>
         <div class="row mt-4">
             <div class="col">
                 <asp:GridView ID="GridView1" runat="server" CellPadding="5" CellSpacing="5"
@@ -31,5 +37,7 @@
             </div>
         </div>
     </asp:Panel>
+
+    <%--This panel is used to show errors or info about actions--%>
     <asp:Panel ID="statusPanel" runat="server"></asp:Panel>
 </asp:Content>

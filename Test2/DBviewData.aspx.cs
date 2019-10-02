@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Authentication;
+using DbAccess;
+
+using System;
 using System.Data.SqlClient;
 using System.Web.UI.WebControls;
-using Authentication;
-using DbAccess;
 using System.Collections.Generic;
-using System.Collections;
 using System.Data;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
@@ -19,15 +19,19 @@ namespace Test2
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Start Authorization check
             Auth auth = new Auth();
             List<string> authorizedRoles = new List<string>() { "ADMIN", "USER" };
             this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
+            // End Authorization check
 
             if (!IsPostBack)
             {
 
                 if (this.isAuthorized)
                 {
+                    // Initialize display for authorized users
+
                     authorizationPanel.Style.Add("display", "inline");
 
                     statusPanel.Style.Add("display", "none");
@@ -36,6 +40,7 @@ namespace Test2
                     this.loadTablesInDropdown();
                 } else
                 {
+                    // Initialize display for unauthorized users
                     authorizationPanel.Style.Add("display", "none");
 
                     statusPanel.Style.Add("display", "inline");
@@ -71,12 +76,16 @@ namespace Test2
 
         protected void tableList_SelectedIndexChanged(object sender, EventArgs e)
         {
+            ViewState["isSearch"] = null;
+
+            // Reinitialize Status panel by clearing any previously added status or error messages
+            statusPanel.Style.Add("display", "none");
+            statusPanel.Controls.Clear();
+
             // get all data from selected table
             this.selectedTable = tableList.SelectedItem.Value.ToString();
             if (!this.selectedTable.Equals("----"))
             {
-                statusPanel.Style.Add("display", "none");
-                statusPanel.Controls.Clear();
 
                 searchPanel.Style.Add("display", "inline");
                 searchBox.Text = string.Empty;
@@ -96,7 +105,11 @@ namespace Test2
 
         private void bindTable(string sql = null)
         {
-            if(this.selectedTable == null)
+            /**
+             * Shows data from db for selected table including primary key
+             * */
+
+            if (this.selectedTable == null)
                 this.selectedTable = ViewState["selectedTable"].ToString();
 
             if(this.selectedTable != null)

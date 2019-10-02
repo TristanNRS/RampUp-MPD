@@ -13,6 +13,7 @@ namespace Authentication
 
         public string getUsername()
         {
+            // Returns current signed in user's username
             if (this.isAuthenticated())
                 return HttpContext.Current.User.Identity.Name;
             return null;
@@ -20,7 +21,8 @@ namespace Authentication
 
         public bool isCurrentUserInActiveDirectory()
         {
-            string username = this.getCurrentAdUser();
+            // Searches the AD for the current user's username
+            string username = this.getCurrentUser();
             DirectorySearcher search = new DirectorySearcher();
             search.Filter = $"(SAMAccountName={username})";
             search.PropertiesToLoad.Add("cn");
@@ -36,14 +38,17 @@ namespace Authentication
             }
         }
 
-        public string getCurrentAdUser()
+        public string getCurrentUser()
         {
+            // Gets current signed in user 
             string loginName = System.Security.Principal.WindowsIdentity.GetCurrent().Name;
             return loginName.Replace("PLANNING\\", "");
         }
 
         public bool isAuthorized(string role, List<string> authorizationNeeded)
         {
+            // Checks if passed role is contained in list of authorized roles
+
             if(role != null || role != string.Empty)
                 return authorizationNeeded.Contains(role);
             return false;

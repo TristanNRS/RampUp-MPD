@@ -1,13 +1,13 @@
-﻿using System;
+﻿using Authentication;
+using DbAccess;
+
+using System;
 using System.Collections.Generic;
 using System.Web.UI.WebControls;
-
-using DbAccess;
 using System.Data.SqlClient;
 using System.Data;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
-using Authentication;
 
 namespace Test2
 {
@@ -19,15 +19,19 @@ namespace Test2
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Start Authorization Check
             Auth auth = new Auth();
             List<string> authorizedRoles = new List<string>() { "ADMIN" };
             this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
+            // End Authorization Check
 
             if (!IsPostBack)
             {
 
                 if (this.isAuthorized)
                 {
+                    // Initialize display for authorized users
+
                     authorizationPanel.Style.Add("display", "inline");
 
                     formPanel.Style.Add("display", "none");
@@ -39,6 +43,8 @@ namespace Test2
                     this.loadTablesInDropdown();
                 } else
                 {
+                    // Initialize display for unauthorized users
+
                     authorizationPanel.Style.Add("display", "none");
 
                     statusPanel.Style.Add("display", "inline");
@@ -77,9 +83,12 @@ namespace Test2
 
         protected void tableList_SelectedIndexChanged(object sender, EventArgs e)
         {
+
+            // Reinitialize Insert form by clearing any previously added controls
             formPanel.Style.Add("display", "none");
             formTable.Controls.Clear();
 
+            // Reinitialize Status panel by clearing any previously added status or error messages
             statusPanel.Style.Add("display", "none");
             statusPanel.Controls.Clear();
 
@@ -111,6 +120,10 @@ namespace Test2
 
         private void bindTable(string sql = null)
         {
+            /**
+             * Shows data from db for selected table not including primary key
+             * */
+
             if (this.selectedTable == null)
                 this.selectedTable = ViewState["selectedTable"].ToString();
 
@@ -377,6 +390,7 @@ namespace Test2
 
         List<string> getInsertValues(Control parent)
         {
+            // Recursively gets all the values from the form to capture data to be inserted into the selected table
             List<string> values = new List<string>();
             foreach (Control child in parent.Controls)
             {
@@ -396,9 +410,9 @@ namespace Test2
 
         }
 
-
         protected void addDataButton_Click(object sender, EventArgs e)
         {
+            // Shows the form to capture data to be inserted into selected table
             formPanel.Style.Add("display", "inline");
         }
 

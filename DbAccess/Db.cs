@@ -16,6 +16,9 @@ namespace DbAccess
     {
         public string validateInput(string input, string colName, Dictionary<string, string> metadata)
         {
+            /**
+             * Validates a given input based on DB type of input and the column name associated with input
+             * */
             if(input.Length > 0)
             {
                 string type = this.mapDbTypeToInputType(metadata["dataType"], colName);
@@ -62,6 +65,10 @@ namespace DbAccess
 
         public string mapDbTypeToInputType(string dataType, string colName)
         {
+            /**
+             * Maps DB type to an input type which may be easily compared using regex for validation
+             * 
+             * */
             string stringType = "string";
             string intType = "int";
             string floatType = "float";
@@ -119,6 +126,7 @@ namespace DbAccess
 
         public string getSqlSelect(List<string> cols, string tableName)
         {
+            // Returns a SQL SELECT statement including all the cols specified in the List<string> from the relevant table
             string sql = "SELECT ";
             int count = 1;
             cols.ForEach((string colName) =>
@@ -134,6 +142,7 @@ namespace DbAccess
 
         public string getSqlInsert(List<string> cols, List<string> values, string tableName)
         {
+            // Returns a SQL INSERT statement to insert all the values specified into the specified cols into the relevant table
             string sql = $"INSERT INTO [dbo].[{tableName}] (";
             int count = 1;
             cols.ForEach((string colName) =>
@@ -159,6 +168,7 @@ namespace DbAccess
 
         public string getSqlUpdate(List<string> cols, List<string> newValues, Dictionary<string, string> primaryKeys, string tableName)
         {
+            // Returns a SQL UPDATE statement updating all the cols specified with the newValues based on the primaryKeys passed
             string sql = $"UPDATE [dbo].[{tableName}] SET ";
             int count = 1;
             cols.ForEach((string colName) =>
@@ -190,6 +200,9 @@ namespace DbAccess
 
         public string getSqlDelete(Dictionary<string, string> primaryKeys, string tableName)
         {
+            // Returns a SQL DELETE statement to delete all values where the primary key = some value 
+            // primaryKeys follows the format : <primaryKeyName> : <primaryKeyValue>
+
             string sql = $"DELETE FROM [dbo].[{tableName}] WHERE ";
             int count = 1;
             List<string> keys = primaryKeys.Keys.ToList();
@@ -207,6 +220,8 @@ namespace DbAccess
 
         public string getSqlSearch(string searchText, List<string> cols, string tableName)
         {
+            // Returns a SQL SELECT statement that returns a subset of the specified table based on any of the cols passed being equal or similiar to the searchText
+
             string sql = $"SELECT * FROM [dbo].[{tableName}] WHERE ";
             int count = 1;
             cols.ForEach((string colName) =>
@@ -413,6 +428,10 @@ namespace DbAccess
 
         protected string formatColName(string colName)
         {
+            // Formats a DB column name to a more readable format
+            // EG. staff_id becomes Staff Id
+            // EG. department becomes Department
+
             string[] arr;
             string formattedValue;
             if (colName.Contains("_"))

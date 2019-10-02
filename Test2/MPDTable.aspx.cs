@@ -1,12 +1,11 @@
 ﻿using Authentication;
 using DbAccess;
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
@@ -18,18 +17,24 @@ namespace Test2
         private Db db = new Db();
         private string selectedTable;
         private bool isAuthorized;
+
+        // Used to store the index of the row to delete 
         private int rowToDelete = -1;
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Start Authorization check
             Auth auth = new Auth();
             List<string> authorizedRoles = new List<string>() { "ADMIN" };
             this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
+            // End Authorization check
 
             if (!IsPostBack)
             {
                 if (this.isAuthorized)
                 {
+                    // Initialize display for authorized users
+
                     authorizationPanel.Style.Add("display", "inline");
 
                     statusPanel.Style.Add("display", "none");
@@ -41,6 +46,8 @@ namespace Test2
                 }
                 else
                 {
+                    // Initialize display for unauthorized users
+
                     authorizationPanel.Style.Add("display", "none");
 
                     statusPanel.Style.Add("display", "inline");
@@ -82,13 +89,15 @@ namespace Test2
         protected void tableList_SelectedIndexChanged(object sender, EventArgs e)
         {
             ViewState["isSearch"] = null;
+
+            // Reinitialize Status panel by clearing any previously added status or error messages
+            statusPanel.Style.Add("display", "none");
+            statusPanel.Controls.Clear();
+
             // get all data from selected table
             if (!tableList.SelectedItem.Value.ToString().Equals("----"))
             {
                 this.selectedTable = tableList.SelectedItem.Value.ToString();
-
-                statusPanel.Style.Add("display", "none");
-                statusPanel.Controls.Clear();
 
                 searchPanel.Style.Add("display", "inline");
                 searchBox.Text = string.Empty;
@@ -109,6 +118,10 @@ namespace Test2
 
         protected void bindTable(string sql = null)
         {
+            /**
+            * Shows data from db for selected table not including primary key
+            * */
+
             if (this.selectedTable == null)
                 this.selectedTable = ViewState["selectedTable"].ToString();
 
@@ -272,9 +285,11 @@ namespace Test2
 
         protected void deleteButton_Click(object sender, EventArgs e)
         {
+            // Delete button in Confirm Delete Modal is clicked
+            // Deletes the row specified in this.rowToDelete
+
             if (this.rowToDelete != -1)
             {
-                // delete record
                 int numPrimaryKeys = GridView1.DataKeyNames.Length;
 
                 Dictionary<string, string> primaryKeys = new Dictionary<string, string>();
@@ -324,14 +339,25 @@ namespace Test2
 
         protected bool isValidated(GridViewUpdateEventArgs e)
         {
+            /**
+             * Validates data entered through edit using NewValues which contains the keys and all values which changed
+             * 
+             * In the case of values that did not change, the NewValues.Values will not contain the unchanged value so a check must be made to ensure 
+             * a null value is not passed to the validateInput function
+             * */
+
             Dictionary<string, Dictionary<string, string>> data = db.getTableMetadata(this.selectedTable);
             IEnumerator keyIterator = e.NewValues.Keys.GetEnumerator();
             IEnumerator valIterator = e.NewValues.Values.GetEnumerator();
+
+            //Iterates through every key and corresponding NewValue to ensure every field is validated
             while (keyIterator.MoveNext() && valIterator.MoveNext())
             {
                 string key = keyIterator.Current.ToString();
 
                 var nextVal = valIterator.Current;
+
+                // toString called here because if valIterator.Current == null then an exception will be thrown
                 string valToValidate = nextVal != null ? nextVal.ToString() : string.Empty;
 
                 string validationResult = db.validateInput(valToValidate, key, data[key]);
@@ -372,6 +398,8 @@ namespace Test2
                 {
                     keys.Add(iterator.Current.ToString());
                     var nextVal = iterator2.Current;
+
+                    // toString called here because if valIterator.Current == null then an exception will be thrown
                     string valToAdd = nextVal != null ? nextVal.ToString() : string.Empty;
                     newValues.Add(valToAdd);
                 }

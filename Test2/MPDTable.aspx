@@ -5,12 +5,16 @@
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="ContentPlaceHolder1" runat="server">
+
+     <%--This panel is used to only show the page to authorized users (based on their role as defined in the Users table in DB)--%>
     <asp:Panel ID="authorizationPanel" runat="server">
         <div class="row mt-5">
             <div class="col">
                 <h4>Edit/Delete</h4>
             </div>
         </div>
+
+        <%--Dropdown list and search bar--%>
         <div class="row mt-4">
             <div class="col" style="position:relative;">
                 <asp:DropDownList ID="tableList" runat="server" OnSelectedIndexChanged="tableList_SelectedIndexChanged" AutoPostBack="true" style="display:inline; position:absolute; top:0px; left: 15px;" Height="27px"></asp:DropDownList>
@@ -20,6 +24,8 @@
                 </asp:Panel>
             </div>
         </div>
+
+        <%--GridView Data table--%>
         <div class="row mt-4">
             <div class="col">
                 <asp:GridView ID="GridView1" runat="server" OnRowDeleting="GridView1_RowDeleting" 
@@ -39,6 +45,8 @@
                     ></asp:GridView>
             </div>
         </div>
+
+        <%--Modal for confirming delete which includes: ScriptManager, hiddenButton for use in TargetControlID attribute in ScriptManager and the Modal itself as a Panel--%>
         <asp:ScriptManager ID="ScriptManager1" runat="server"></asp:ScriptManager>
         <ajaxToolkit:ModalPopupExtender ID="ModalExtender" runat="server" 
          PopupControlID="ModalPanel" OkControlID="deleteButton" CancelControlID="cancelButton" TargetControlID="hiddenButton"  />
@@ -67,5 +75,6 @@
 
     </asp:Panel>
 
+    <%--This panel is used to show errors or info about actions--%>
     <asp:Panel ID="statusPanel" runat="server"></asp:Panel>
 </asp:Content>

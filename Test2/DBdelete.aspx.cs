@@ -1,11 +1,10 @@
 ﻿using Authentication;
 using DbAccess;
+
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
-using System.Web;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
@@ -17,18 +16,24 @@ namespace Test2
         private Db db = new Db();
         private string selectedTable;
         private bool isAuthorized;
+
+        // Used to store the index of the row to delete 
         private int rowToDelete = -1;
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Start Authorization check
             Auth auth = new Auth();
             List<string> authorizedRoles = new List<string>() { "ADMIN" };
             this.isAuthorized = auth.isAuthorized(Session["Role"].ToString(), authorizedRoles);
+            // End Authorization check
 
             if (!IsPostBack)
             {
                 if (this.isAuthorized)
                 {
+                    // Initialize display for authorized users
+
                     authorizationPanel.Style.Add("display", "inline");
 
                     statusPanel.Style.Add("display", "none");
@@ -39,6 +44,8 @@ namespace Test2
                     this.loadTablesInDropdown();
                 } else
                 {
+                    // Initialize display for unauthorized users
+
                     authorizationPanel.Style.Add("display", "none");
 
                     statusPanel.Style.Add("display", "inline");
@@ -80,13 +87,15 @@ namespace Test2
         protected void tableList_SelectedIndexChanged(object sender, EventArgs e)
         {
             ViewState["isSearch"] = null;
+
+            // Reinitialize Status panel by clearing any previously added status or error messages
+            statusPanel.Style.Add("display", "none");
+            statusPanel.Controls.Clear();
+
             // get all data from selected table
             if (!tableList.SelectedItem.Value.ToString().Equals("----"))
             {
                 this.selectedTable = tableList.SelectedItem.Value.ToString();
-
-                statusPanel.Style.Add("display", "none");
-                statusPanel.Controls.Clear();
 
                 searchPanel.Style.Add("display", "inline");
                 searchBox.Text = string.Empty;
@@ -107,6 +116,10 @@ namespace Test2
 
         protected void bindTable(string sql = null)
         {
+            /**
+             * Shows data from db for selected table including primary key
+             * */
+
             if (this.selectedTable == null)
                 this.selectedTable = ViewState["selectedTable"].ToString();
 
@@ -122,7 +135,7 @@ namespace Test2
                     List<string> colNames = db.getAllColumnNames(this.selectedTable, conn);
                     List<string> primaryKeys = db.getPrimaryKeys(this.selectedTable);
 
-                    // set name of primary key
+                    // set names of primary keys
                     if (primaryKeys != null)
                         GridView1.DataKeyNames = primaryKeys.ToArray();
 
@@ -251,9 +264,10 @@ namespace Test2
 
         protected void deleteButton_Click(object sender, EventArgs e)
         {
+            // Delete button in Confirm Delete Modal is clicked
+            // Deletes the row specified in this.rowToDelete
             if(this.rowToDelete != -1)
             {
-                // delete record
                 int numPrimaryKeys = GridView1.DataKeyNames.Length;
 
                 Dictionary<string, string> primaryKeys = new Dictionary<string, string>();

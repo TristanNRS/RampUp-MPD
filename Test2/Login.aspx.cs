@@ -17,8 +17,11 @@ namespace Test2
 
         protected void dbLogin()
         {
+            /**
+             * Authenticates based on current AD username and Users table in DB
+             * */
             Auth auth = new Auth();
-            string username = auth.getCurrentAdUser();
+            string username = auth.getCurrentUser();
             try
             {
                 /*
