@@ -3,6 +3,6 @@ Ramp up on ASP.NET, C# and SQL Server dev stack
 
 Functionality to include:
 
--CRUD for all data tables 
--Search for all data tables
+1. CRUD for all data tables 
+2. Search for all data tables
 
