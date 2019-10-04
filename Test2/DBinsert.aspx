@@ -39,9 +39,13 @@
             </div>
 
             <%--Form to insert data is dynamically generated based on selected table and placed here--%>
-            <div class="mt-2 mb-5" style="width:22vw">
+            <div class="mt-2 mb-5">
                 <asp:Panel ID="formPanel" runat="server">
-                    <asp:Table ID="formTable" runat="server" CellPadding="5"></asp:Table>
+                    <hr />
+                    <div class="d-flex flex-column justify-content-center align-items-center">
+                        <h5>Data Entry</h5>
+                        <asp:Table ID="formTable" runat="server" CellPadding="5" CellSpacing="5" Width="700px"></asp:Table>
+                    </div>
                 </asp:Panel>
             </div>
 

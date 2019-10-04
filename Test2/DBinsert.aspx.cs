@@ -238,16 +238,6 @@ namespace Test2
              * Footer Row: contains Submit button
              * 
              * */
-            // add header
-            TableHeaderRow headerRow = new TableHeaderRow();
-            TableHeaderCell headerCell = new TableHeaderCell();
-            HtmlGenericControl h3 = new HtmlGenericControl();
-            h3.InnerHtml = "Data Entry";
-            h3.Style.Add("display", "inline");
-            headerCell.Controls.Add(h3);
-
-            headerRow.Cells.Add(headerCell);
-            formTable.Rows.Add(headerRow);
 
             // add body
             Dictionary<string, Dictionary<string, string>> data = db.getTableMetadata(this.selectedTable);
@@ -261,8 +251,12 @@ namespace Test2
                     string colName = colNames[i];
 
                     TableRow tr = new TableRow();
+                    tr.Width = new Unit("100%");
+                    tr.Height = new Unit("70%");
 
                     TableCell labelCell = new TableCell();
+                    labelCell.Style.Add("width", "25%");
+
                     // create label 
                     Label label = new Label();
                     label.ID = $"lbl_{this.selectedTable}_{colName}";
@@ -272,12 +266,13 @@ namespace Test2
 
                     // create textbox
                     TableCell inputCell = new TableCell();
+                    inputCell.Style.Add("width", "70%");
                     TextBox txt = new TextBox();
                     txt.ID = $"txt_{this.selectedTable}_{colName}";
-                    txt.Style.Add("width", "250px");
                     if (colName.Equals("description"))
                         txt.TextMode = TextBoxMode.MultiLine;
                     txt.Text = string.Empty;
+                    txt.Style.Add("width", "100%");
 
                     // add textbox to input cell
                     inputCell.Controls.Add(txt);
@@ -315,6 +310,7 @@ namespace Test2
                     RegularExpressionValidator typeValidator = new RegularExpressionValidator();
                     typeValidator.ID = $"validateType_{this.selectedTable}_{colName}";
                     typeValidator.ControlToValidate = txt.ID;
+                    typeValidator.Display = ValidatorDisplay.Dynamic;
                     typeValidator.ErrorMessage = $"Wrong type: expected {type}";
                     typeValidator.ForeColor = System.Drawing.Color.Red;
 
