@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
 using System.Web.UI.WebControls;
@@ -134,7 +135,9 @@ namespace Test2
 
                     conn.Open();
 
-                    List<string> colNames = db.getAllColumnNames(this.selectedTable, conn);
+                    Dictionary<string, Dictionary<string, string>> metadata = db.getTableMetadata(this.selectedTable, conn);
+                    List<string> colNames = metadata.Keys.ToList();
+
                     List<string> primaryKeys = db.getPrimaryKeys(this.selectedTable);
                     List<string> foreignKeys = db.getForeignKeys(this.selectedTable);
 
@@ -174,6 +177,10 @@ namespace Test2
 
                             Field.DataField = colNames[i];
                             Field.HeaderText = headerNames[i];
+
+                            Dictionary<string, string> colMetaData = metadata[colNames[i]];
+                            if (colMetaData["dataType"].ToString().ToLower().Equals("date"))
+                                Field.DataFormatString = "{0:MM/dd/yyyy}";
 
                             Col = Field;
 

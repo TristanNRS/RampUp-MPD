@@ -161,9 +161,21 @@ namespace DbAccess
             values.ForEach((string value) =>
             {
                 if (count < values.Count)
-                    sql += $"'{value}', ";
+                {
+                    if(!value.ToUpper().Equals("NULL"))
+                        sql += $"'{value}', ";
+                    else
+                        sql += $"{value}, ";
+                }
+                    
                 else if (count == values.Count)
-                    sql += $"'{value}') ";
+                {
+                    if(!value.ToUpper().Equals("NULL"))
+                        sql += $"'{value}') ";
+                    else
+                        sql += $"{value})";
+                }
+                    
                 count += 1;
             });
             return sql;

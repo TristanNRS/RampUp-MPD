@@ -136,7 +136,8 @@ namespace Test2
 
                     conn.Open();
 
-                    List<string> colNames = db.getEditableInsertableColumnNames(this.selectedTable, conn);
+                    Dictionary<string, Dictionary<string, string>> metadata = db.getTableMetadata(this.selectedTable, conn);
+                    List<string> colNames = db.getEditableInsertableColumnNames(this.selectedTable, conn, metadata);
 
                     if (colNames != null)
                     {
@@ -161,6 +162,10 @@ namespace Test2
 
                                 Field.DataField = colNames[i];
                                 Field.HeaderText = headerNames[i];
+
+                                Dictionary<string, string> colMetaData = metadata[colNames[i]];
+                                if (colMetaData["dataType"].ToString().ToLower().Equals("date"))
+                                    Field.DataFormatString = "{0:MM/dd/yyyy}";
 
                                 Col = Field;
 
@@ -247,17 +252,21 @@ namespace Test2
             // add body
             Dictionary<string, Dictionary<string, string>> data = db.getTableMetadata(this.selectedTable);
             List<string> colNames = db.getEditableInsertableColumnNames(null, null, data);
-            if(colNames != null)
+            List<string> formattedColNames = db.getFormattedColNames(colNames);
+
+            if (colNames != null)
             {
-                colNames.ForEach((colName) =>
+                for(int i =0; i< colNames.Count; i += 1)
                 {
+                    string colName = colNames[i];
+
                     TableRow tr = new TableRow();
 
                     TableCell labelCell = new TableCell();
                     // create label 
                     Label label = new Label();
                     label.ID = $"lbl_{this.selectedTable}_{colName}";
-                    label.Text = $"Enter {colName}: ";
+                    label.Text = $"Enter {formattedColNames[i]}: ";
                     // add label to label cell
                     labelCell.Controls.Add(label);
 
@@ -344,7 +353,7 @@ namespace Test2
 
                     // Add row to the table.
                     formTable.Rows.Add(tr);
-                });
+                }
 
                 // add footer
                 TableFooterRow footerRow = new TableFooterRow();
@@ -416,7 +425,10 @@ namespace Test2
                 if (child.GetType().ToString().Equals("System.Web.UI.WebControls.TextBox"))
                 {
                     TextBox txt = (TextBox)child;
-                    values.Add(txt.Text);
+                    if (txt.Text.Length > 0)
+                        values.Add(txt.Text);
+                    else
+                        values.Add("NULL");
                 }
 
                 if (child.Controls.Count > 0)

@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Web.UI;
 using System.Web.UI.HtmlControls;
+using System.Linq;
 
 namespace Test2
 {
@@ -132,8 +133,10 @@ namespace Test2
 
                     if (dt.Rows.Count > 0)
                     {
-                        List<string> colNames = db.getAllColumnNames(this.selectedTable, conn);
+                        Dictionary<string, Dictionary<string, string>> metadata  = db.getTableMetadata(this.selectedTable, conn);
+                        List<string> colNames = metadata.Keys.ToList();
                         List<string> headerNames = db.getFormattedColNames(colNames);
+
                         BoundField Field;
                         DataControlField Col;
                         for(int i = 0; i < colNames.Count; i += 1)
@@ -142,6 +145,10 @@ namespace Test2
 
                             Field.DataField = colNames[i];
                             Field.HeaderText = headerNames[i];
+
+                            Dictionary<string, string> colMetaData = metadata[colNames[i]];
+                            if (colMetaData["dataType"].ToString().ToLower().Equals("date"))
+                                Field.DataFormatString = "{0:MM/dd/yyyy}";
 
                             Col = Field;
 
